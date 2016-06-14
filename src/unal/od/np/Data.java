@@ -24,8 +24,8 @@ import unal.od.jdiffraction.cpu.utils.ArrayUtils;
 
 /**
  *
- * @author: Raul Castañeda (racastanedaq@unal.edu.co)
- * @author: Pablo Piedrahita-Quintero (jppiedrahitaq@unal.edu.co)
+ * @author Raul Castañeda (racastanedaq@unal.edu.co)
+ * @author Pablo Piedrahita-Quintero (jppiedrahitaq@unal.edu.co)
  * @author Jorge Garcia-Sucerquia (jigarcia@unal.edu.co)
  */
 public class Data {
@@ -55,32 +55,25 @@ public class Data {
     private int x, y, w, h;
     private int[][] mask;
 
-    private float[][] inputImage, imageSpectrum;
-    private float[][] fftImage, filteredImage, filteredImageSpherical, outputField;
+    private float[][] imageSpectrum;
+    private float[][] field, fieldSpherical, outputField;
+    private float[][] filteredField, filteredFieldSpherical;
 
-    private boolean filtered = false;
+    private float curvRadius;
+    private float[][] sphericalWave;
 
-    private boolean phaseChecked, amplitudeSelected, intensitySelected;
-
+//    private boolean filtered = false;
     private FloatFFT_2D fft;
 
     private FloatPropagator propagator;
 
     public void calculateFFT() {
         fft = new FloatFFT_2D(M, N);
-        fftImage = new float[M][2 * N];
 
-        for (int i = 0; i < M; i++) {
-            for (int j = 0; j < N; j++) {
-                fftImage[i][2 * j] = inputImage[i][j];
-                fftImage[i][2 * j + 1] = 0;
-            }
-        }
+        fft.complexForward(field);
+        ArrayUtils.complexShift(field);
 
-        fft.complexForward(fftImage);
-        ArrayUtils.complexShift(fftImage);
-
-        imageSpectrum = ArrayUtils.modulusSq(fftImage);
+        imageSpectrum = ArrayUtils.modulus(field);
     }
 
     public void center() {
@@ -89,13 +82,12 @@ public class Data {
             return;
         }
 
-        filteredImage = new float[M][2 * N];
-        filteredImageSpherical = new float[M][2 * N];
+        filteredField = new float[M][2 * N];
 
         for (int i = 0; i < M; i++) {
             for (int j = 0; j < N; j++) {
-                filteredImage[i][2 * j] = 0;
-                filteredImage[i][2 * j + 1] = 0;
+                filteredField[i][2 * j] = 0;
+                filteredField[i][2 * j + 1] = 0;
             }
         }
 
@@ -107,26 +99,29 @@ public class Data {
             int j2 = 0;
             for (int j = y; j < y + h; j++) {
                 if (mask[i2][j2] != 0) {
-                    filteredImage[i + a][2 * (j + b)] = fftImage[i][2 * j];
-                    filteredImage[i + a][2 * (j + b) + 1] = fftImage[i][2 * j + 1];
+                    filteredField[i + a][2 * (j + b)] = field[i][2 * j];
+                    filteredField[i + a][2 * (j + b) + 1] = field[i][2 * j + 1];
                 }
                 j2++;
             }
             i2++;
         }
 
-        ArrayUtils.complexShift(filteredImage);
-        fft.complexInverse(filteredImage, true);
+        ArrayUtils.complexShift(filteredField);
+        fft.complexInverse(filteredField, true);
+
+//        for (int i = 0; i < M; i++) {
+//            System.arraycopy(filteredField[i], 0, field[i], 0, filteredField[i].length);
+//        }
     }
 
     private void center(int x, int y, int width, int height) {
-        filteredImage = new float[M][2 * N];
-        filteredImageSpherical = new float[M][2 * N];
+        filteredField = new float[M][2 * N];
 
         for (int i = 0; i < M; i++) {
             for (int j = 0; j < N; j++) {
-                filteredImage[i][2 * j] = 0;
-                filteredImage[i][2 * j + 1] = 0;
+                filteredField[i][2 * j] = 0;
+                filteredField[i][2 * j + 1] = 0;
             }
         }
 
@@ -134,20 +129,20 @@ public class Data {
         int b = (N - height - 2 * y) / 2;
         for (int i = x; i < x + width - 1; i++) {
             for (int j = y; j < y + height - 1; j++) {
-                filteredImage[i + a][2 * (j + b)] = fftImage[i][2 * j];
-                filteredImage[i + a][2 * (j + b) + 1] = fftImage[i][2 * j + 1];
+                filteredField[i + a][2 * (j + b)] = field[i][2 * j];
+                filteredField[i + a][2 * (j + b) + 1] = field[i][2 * j + 1];
             }
         }
 
-        ArrayUtils.complexShift(filteredImage);
-        fft.complexInverse(filteredImage, true);
+        ArrayUtils.complexShift(filteredField);
+        fft.complexInverse(filteredField, true);
 
-//        ImageProcessor ip = new FloatProcessor(ArrayUtils.modulusSq(filteredImage));
-//        ImagePlus imp = new ImagePlus("holo_f", ip);
-//        imp.show();
+//        for (int i = 0; i < M; i++) {
+//            System.arraycopy(filteredImage[i], 0, field[i], 0, filteredImage[i].length);
+//        }
     }
 
-    public void propagate(int idx) {
+    public void propagate(int idx, boolean filtered, boolean isPlane, float curvRadius) {
         switch (idx) {
             case 0:
                 propagator = new FloatAngularSpectrum(M, N, lambda, z, dx, dy);
@@ -161,85 +156,67 @@ public class Data {
             case 3:
                 float zCrit = M * dx * dx / lambda;
                 if (Math.abs(z) < zCrit) {
-//                    System.out.println("AS: " + z);
                     propagator = new FloatAngularSpectrum(M, N, lambda, z, dx, dy);
                 } else {
-//                    System.out.println("FF: " + z);
                     propagator = new FloatFresnelFourier(M, N, lambda, z, dx, dy);
                 }
                 break;
         }
 
-        outputField = new float[M][];
+        outputField = new float[M][2 * N];
 
-        for (int i = 0; i < M; i++) {
-            outputField[i] = filteredImage[i].clone();
+        if (filtered) {
+            if (isPlane) {
+                for (int i = 0; i < M; i++) {
+                    System.arraycopy(filteredField[i], 0, outputField[i], 0, 2 * N);
+                }
+            } else {
+                calculateSphericalWave(curvRadius);
+                outputField = ArrayUtils.complexMultiplication(filteredField, sphericalWave);
+            }
+        } else {
+            if (isPlane) {
+                for (int i = 0; i < M; i++) {
+                    System.arraycopy(field[i], 0, outputField[i], 0, 2 * N);
+                }
+            } else {
+                calculateSphericalWave(curvRadius);
+                outputField = ArrayUtils.complexMultiplication(field, sphericalWave);
+            }
         }
 
         propagator.diffract(outputField);
     }
 
-    public void propagate(int idx, boolean calculate, float c) {
-        switch (idx) {
-            case 0:
-                propagator = new FloatAngularSpectrum(M, N, lambda, z, dx, dy);
-                break;
-            case 1:
-                propagator = new FloatFresnelFourier(M, N, lambda, z, dx, dy);
-                break;
-            case 2:
-                propagator = new FloatFresnelBluestein(M, N, lambda, z, dx, dy, dxOut, dyOut);
-                break;
-            case 3:
-                float zCrit = M * dx * dx / lambda;
-                if (z < zCrit) {
-                    propagator = new FloatAngularSpectrum(M, N, lambda, z, dx, dy);
-                } else {
-                    propagator = new FloatFresnelFourier(M, N, lambda, z, dx, dy);
-                }
-                break;
+    private void calculateSphericalWave(float curvRadius) {
+        if (this.curvRadius == curvRadius && sphericalWave.length == M
+                && sphericalWave[0].length == 2 * N) {
+            return;
         }
 
-        if (calculate) {
-            outputField = new float[M][2 * N];
-            int M2 = M / 2;
-            int N2 = N / 2;
-            float f = 1 / (2 * c);
+        sphericalWave = new float[M][2 * N];
+        this.curvRadius = curvRadius;
 
-            for (int i = 0; i < M; i++) {
-                int i2 = i - M2 + 1;
-                float a = (dx * dx * i2 * i2);
+        int M2 = M / 2;
+        int N2 = N / 2;
+        float f = 1 / (2 * curvRadius);
 
-                for (int j = 0; j < N; j++) {
-                    int j2 = j - N2 + 1;
-                    float b = (dy * dy * j2 * j2);
-                    float phase = f * (a + b);
+        for (int i = 0; i < M; i++) {
+            int i2 = i - M2 + 1;
+            float a = (dx * dx * i2 * i2);
 
-                    outputField[i][2 * j]
-                            = filteredImageSpherical[i][2 * j]
-                            = filteredImage[i][2 * j] * (float) Math.cos(phase);
+            for (int j = 0; j < N; j++) {
+                int j2 = j - N2 + 1;
+                float b = (dy * dy * j2 * j2);
+                float phase = f * (a + b);
 
-                    outputField[i][2 * j + 1]
-                            = filteredImageSpherical[i][2 * j + 1]
-                            = filteredImage[i][2 * j + 1] * (float) Math.sin(phase);
-
-                }
-            }
-        } else {
-            for (int i = 0; i < M; i++) {
-                outputField[i] = filteredImageSpherical[i].clone();
+                sphericalWave[i][2 * j] = (float) Math.cos(phase);
+                sphericalWave[i][2 * j + 1] = (float) Math.sin(phase);
             }
         }
-
-        propagator.diffract(outputField);
     }
 
     // <editor-fold defaultstate="collapsed" desc="Setters and getters">
-    public void setDimensions(int M, int N) {
-        this.M = M;
-        this.N = N;
-    }
-
     public void setROI(int x, int y, int width, int height, int[][] mask) {
         this.x = x;
         this.y = y;
@@ -256,25 +233,10 @@ public class Data {
         dy = inputH / N;
         this.outputW = outputW;
         this.outputH = outputH;
-        
+
         int sign = (int) Math.signum(z);
         dxOut = sign * outputW / M;
         dyOut = sign * outputH / N;
-        
-//        dxOut = lambda * z / (M * dx);//outputW / M;
-//        dyOut = lambda * z / (N * dy);//outputH / N;
-//        dxOut = (z < 0) ? -outputW / M : outputW / M;
-//        dyOut = (z < 0) ? -outputH / N : outputH / N;
-
-//        System.out.println("---");
-//        System.out.println("" + M);
-//        System.out.println("" + N);
-//        System.out.println("---");
-//        System.out.println("" + outputW / M);
-//        System.out.println("" + outputH / N);
-//        System.out.println("---");
-//        System.out.println("" + dxOut);
-//        System.out.println("" + dyOut);
     }
 
     public void setParameters(float lambda, float z, float inputW, float inputH) {
@@ -284,26 +246,63 @@ public class Data {
         dy = inputH / N;
     }
 
-    public void setDistance(float z) {
+    public void setDistance(float z, boolean fb) {
         this.z = z;
-        
-        int sign = (int) Math.signum(z);
-        dxOut = sign * outputW / M;
-        dyOut = sign * outputH / N;
+
+        if (fb) {
+            int sign = (int) Math.signum(z);
+            dxOut = sign * outputW / M;
+            dyOut = sign * outputH / N;
+        }
     }
 
-    public void setInputImage(float[][] inputImage) {
-        this.inputImage = inputImage;
-    }
+    public void setInputImages(int M, int N, float[][] inputReal, float[][] inputImaginary) {
+        this.M = M;
+        this.N = N;
+        field = ArrayUtils.complexAmplitude2(inputReal, inputImaginary);
 
-    public void setOutputs(boolean phase, boolean amplitude, boolean intensity) {
-        this.phaseChecked = phase;
-        this.amplitudeSelected = amplitude;
-        this.intensitySelected = intensity;
-    }
+        /*
+         if (inputReal != null && inputImaginary != null) {
 
-    public void setFiltered(boolean filtered) {
-        this.filtered = filtered;
+         M = inputReal.length;
+         N = inputReal[0].length;
+
+         field = new float[M][2 * N];
+
+         for (int i = 0; i < M; i++) {
+         for (int j = 0; j < N; j++) {
+         field[i][2 * j] = inputReal[i][j];
+         field[i][2 * j + 1] = inputImaginary[i][j];
+         }
+         }
+         } else if (inputReal != null && !(inputImaginary != null)) {
+
+         M = inputReal.length;
+         N = inputReal[0].length;
+
+         field = new float[M][2 * N];
+
+         for (int i = 0; i < M; i++) {
+         for (int j = 0; j < N; j++) {
+         field[i][2 * j] = inputReal[i][j];
+         field[i][2 * j + 1] = 0;
+         }
+         }
+         } else if (!(inputReal != null) && inputImaginary != null) {
+
+         M = inputImaginary.length;
+         N = inputImaginary[0].length;
+
+         field = new float[M][2 * N];
+
+         for (int i = 0; i < M; i++) {
+         for (int j = 0; j < N; j++) {
+         field[i][2 * j] = 0;
+         field[i][2 * j + 1] = inputImaginary[i][j];
+         }
+         }
+         }
+         */
     }
 
     public float getZ() {
@@ -324,22 +323,6 @@ public class Data {
 
     public float[][] getOutputField() {
         return outputField;
-    }
-
-    public boolean isFiltered() {
-        return filtered;
-    }
-
-    public boolean isPhaseSelected() {
-        return phaseChecked;
-    }
-
-    public boolean isAmplitudeSelected() {
-        return amplitudeSelected;
-    }
-
-    public boolean isIntensitySelected() {
-        return intensitySelected;
     }
 // </editor-fold>
 }

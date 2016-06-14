@@ -22,13 +22,14 @@ import javax.swing.UnsupportedLookAndFeelException;
 
 /**
  *
- * @author: Raul Castañeda (racastanedaq@unal.edu.co)
- * @author: Pablo Piedrahita-Quintero (jppiedrahitaq@unal.edu.co)
+ * @author Raul Castañeda (racastanedaq@unal.edu.co)
+ * @author Pablo Piedrahita-Quintero (jppiedrahitaq@unal.edu.co)
  * @author Jorge Garcia-Sucerquia (jigarcia@unal.edu.co)
  */
 public class NumericalPropagation_ implements PlugIn {
 
-    private static MainFrame FRAME;
+    private static MainFrame MAIN_FRAME;
+    private static UtilitiesFrame UTILITIES_FRAME;
 
     private static final String about = "DH_OD v1.0\n"
             + "Raul Andrés Castañeda Quintero\n"
@@ -55,19 +56,29 @@ public class NumericalPropagation_ implements PlugIn {
         } catch (UnsupportedLookAndFeelException e) {
         }
 
+        if (arg.equalsIgnoreCase("utilities")) {
+            if (UTILITIES_FRAME == null || !UTILITIES_FRAME.isDisplayable()) {
+                UTILITIES_FRAME = new UtilitiesFrame();
+                UTILITIES_FRAME.setVisible(true);
+            } else {
+                UTILITIES_FRAME.setVisible(true);
+                UTILITIES_FRAME.toFront();
+            }
+            return;
+        }
+
         if (arg.equalsIgnoreCase("about")) {
             showAbout();
             return;
         }
 
-        if (FRAME == null || !FRAME.isDisplayable()) {
-            FRAME = new MainFrame();
-            FRAME.setVisible(true);
+        if (MAIN_FRAME == null || !MAIN_FRAME.isDisplayable()) {
+            MAIN_FRAME = new MainFrame();
+            MAIN_FRAME.setVisible(true);
         } else {
-            FRAME.setVisible(true);
-            FRAME.toFront();
+            MAIN_FRAME.setVisible(true);
+            MAIN_FRAME.toFront();
         }
-
     }
 
     private void showAbout() {
@@ -83,5 +94,7 @@ public class NumericalPropagation_ implements PlugIn {
 //        IJ.open(f.getAbsolutePath());
 //
 //        new NumericalPropagation_().run("");
+//        new NumericalPropagation_().run("about");
+//        new NumericalPropagation_().run("utilities");
 //    }
 }

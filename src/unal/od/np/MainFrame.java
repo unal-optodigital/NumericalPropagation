@@ -18,85 +18,102 @@ package unal.od.np;
 import ij.ImageListener;
 import ij.ImagePlus;
 import ij.WindowManager;
+import ij.measure.Calibration;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import java.awt.Frame;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.Locale;
 import java.util.prefs.Preferences;
-import javax.swing.BorderFactory;
 import javax.swing.DefaultComboBoxModel;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JCheckBoxMenuItem;
-import javax.swing.JComboBox;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JMenuItem;
+import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
 import javax.swing.JTextField;
-import javax.swing.text.DefaultCaret;
 import unal.od.jdiffraction.cpu.utils.ArrayUtils;
 
 /**
  *
- * @author: Raul Castañeda (racastanedaq@unal.edu.co)
- * @author: Pablo Piedrahita-Quintero (jppiedrahitaq@unal.edu.co)
+ * @author Raul Castañeda (racastanedaq@unal.edu.co)
+ * @author Pablo Piedrahita-Quintero (jppiedrahitaq@unal.edu.co)
  * @author Jorge Garcia-Sucerquia (jigarcia@unal.edu.co)
  */
-public class MainFrame extends JFrame implements ImageListener, PreferencesKeys {
+public class MainFrame extends javax.swing.JFrame implements ImageListener, PreferencesKeys {
 
-    // <editor-fold defaultstate="collapsed" desc="Frame variables">
     private static final String TITLE = "Numerical Propagation";
-    private static final String LOG_HEADER = "Version 1.0 - February 2015";
+    private static final String LOG_HEADER = "Version 1.1 - March 2015";
     private static final String LOG_SEPARATOR = "\n---------------------------";
 
-    public static final String[] POPAGATION_METHOD = new String[]{"Angular Spectrum", "Fresnel", "Fresnel - Bluestein", "Automatic"};
+    public static final String[] PROPAGATION_METHOD = new String[]{"Angular Spectrum", "Fresnel", "Fresnel - Bluestein", "Automatic"};
 
-    private JPanel btnsPanel;
-    private JPanel propPanel;
-//    private JPanel stepPanel;
-    private JPanel inputsPanel;
-    private JPanel checkPanel;
-    private JScrollPane logPane;
+    //user inputs in user units
+    private float lambdaUser;
+    private float zUser;
+    private float inputWUser;
+    private float inputHUser;
+    private float outputWUser;
+    private float outputHUser;
 
-    private JLabel methodLabel;
-    private JLabel inputLabel;
-    private JLabel lambdaLabel;
-    private JLabel zLabel;
-    private JLabel inputWLabel;
-    private JLabel inputHLabel;
-    private JLabel outputWLabel;
-    private JLabel outputHLabel;
+    private float stepUser;
+    private float zStepUser;
 
-    private JComboBox methodCombo;
-    private JComboBox inputCombo;
+    //user inputs converted to um
+    private float lambdaUm;
+    private float zUm;
+    private float inputWUm;
+    private float inputHUm;
+    private float outputWUm;
+    private float outputHUm;
 
-    private JTextField lambdaField;
-    private JTextField zField;
-    private JTextField inputWField;
-    private JTextField inputHField;
-    private JTextField outputWField;
-    private JTextField outputHField;
-    private JTextField stepField;
+    private float stepUm;
+    private float zStepUm;
 
+    //when filtering and same roi are enabled, this variables help to identify if
+    //the inputs and the dimensions changed
+    private int oldIDReal = Integer.MAX_VALUE, newIDReal, oldIDImaginary = Integer.MAX_VALUE, newIDImaginary;
+    private int oldMReal = 0, newMReal, oldMImaginary = 0, newMImaginary;
+    private int oldNReal = 0, newNReal, oldNImaginary = 0, newNImaginary;
+
+    //input field dimensions, useful for output calibration
+    private int M, N;
+
+    //arrays with the current open images information
+    private int[] windowsId;
+    private String[] titles;
+
+    //input images titles
+    private String realTitle;
+    private String imaginaryTitle;
+
+    //calibration object for the output images
+    private Calibration cal;
+
+    //formatter
+    private final DecimalFormat df;
+
+    //preferences
+    private final Preferences pref;
+
+    //data object, performs the calculations
+    private final Data data;
+
+    //frames
+    private SettingsFrame settingsFrame = null;
+    private FilterFrame filterFrame = null;
+    private BatchFrame batchFrame = null;
+
+    // <editor-fold defaultstate="collapsed" desc="Prefs variables">
+    //frame location
+    private int locX;
+    private int locY;
+
+    //method combo index
+    private int methodIdx;
+
+    //last parameters used
     private String lambdaString;
     private String zString;
     private String inputWString;
@@ -105,392 +122,110 @@ public class MainFrame extends JFrame implements ImageListener, PreferencesKeys 
     private String outputHString;
     private String stepString;
 
-//    private String logSelection;
-    private float lambda;
-    private float z;
-    private float inputW;
-    private float inputH;
-    private float outputW;
-    private float outputH;
-    private float step;
-    private float zStep;
-
-    private int methodIdx;
-
-    private int fftID;
-
-    private int oldID, newID;
-    private int oldM, newM;
-    private int oldN, newN;
-
-    private JTextArea log;
-
-    private JPopupMenu popup;
-    private JMenuItem copyItem;
-    private JMenuItem copyAllItem;
-    private JCheckBoxMenuItem wrapItem;
-    private JMenuItem clearItem;
-
-    private JCheckBox roiChk;
-    private JCheckBox phaseChk;
-    private JCheckBox amplitudeChk;
-    private JCheckBox intensityChk;
-
-    private JButton settingsBtn;
-    private JButton batchBtn;
-    private JButton incBtn;
-    private JButton propagateBtn;
-//    private JButton clearBtn;
-    private JButton decBtn;
-
-    private int[] windowsId;
-    private String[] titles;
-
-    private SettingsFrame settingsFrame = null;
-    private FilterFrame filterFrame = null;
-    private BatchFrame batchFrame = null;
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="Prefs variables">
-    private int comboIdx;
-
+    //parameters units
     private String lambdaUnits;
     private String zUnits;
-    private String inputWUnits;
-    private String inputHUnits;
-    private String outputWUnits;
-    private String outputHUnits;
+    private String inputSizeUnits;
+//    private String inputWUnits;
+//    private String inputHUnits;
+    private String outputSizeUnits;
+//    private String outputWUnits;
+//    private String outputHUnits;
 
+    //same roi option checked or not
     private boolean roiEnabled;
+
+    //last outputs used
     private boolean phaseEnabled;
     private boolean amplitudeEnabled;
     private boolean intensityEnabled;
+    private boolean realEnabled;
+    private boolean imaginaryEnabled;
+
+    //filtering
+    private boolean filterEnabled;
+
+    //plane illumination
+    private boolean isPlane;
+
+    //curvature radius for spherical illumination
+    private float curvRadius;
+
+    //log scaling options
+    private boolean amplitudeLogSelected;
+    private boolean intensityLogSelected;
+
+    //8bit scaling options
+    private boolean phaseByteSelected;
+    private boolean amplitudeByteSelected;
+    private boolean intensityByteSelected;
+    private boolean realByteSelected;
+    private boolean imaginaryByteSelected;
+
+    private boolean relationLock;
 
     private boolean logWrapping;
     // </editor-fold>
 
-    private String imageTitle;
-    private final DecimalFormat df;
-
-    private final Preferences pref;
-    private final Data data;
-
+    /**
+     * Creates the main frame
+     */
     public MainFrame() {
+        //initialized objects
         df = new DecimalFormat("#.####", new DecimalFormatSymbols(Locale.US));
         pref = Preferences.userNodeForPackage(getClass());
         data = Data.getInstance();
-        initComponents();
-    }
 
-    private void initComponents() {
-        addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent event) {
-                if (filterFrame != null && filterFrame.isVisible()) {
-                    filterFrame.close(false);
-                }
-
-                if (settingsFrame != null && settingsFrame.isVisible()) {
-                    settingsFrame.setVisible(false);
-                    settingsFrame.dispose();
-                }
-
-                if (batchFrame != null && batchFrame.isVisible()) {
-                    batchFrame.setVisible(false);
-                    batchFrame.dispose();
-                }
-
-                savePrefs();
-                removeListener();
-                setVisible(false);
-                dispose();
-            }
-        });
-
-        setResizable(false);
-        setTitle(TITLE);
-
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        setBounds(300, 300, 501, 291);
-
+        //gets the current open images and load the last preferences
         getOpenedImages();
         loadPrefs();
 
-        ButtonListener btnListener = new ButtonListener();
-
-        //parameters panel
-        GridBagLayout gblParametersPanel = new GridBagLayout();
-        GridBagConstraints gbcParametersPanel = new GridBagConstraints();
-        gbcParametersPanel.insets = new Insets(5, 5, 5, 5);
-        inputsPanel = new JPanel(gblParametersPanel);
-
-        //Labels column
-        gbcParametersPanel.fill = GridBagConstraints.NONE;
-        gbcParametersPanel.anchor = GridBagConstraints.EAST;
-        gbcParametersPanel.gridx = 0;
-        gbcParametersPanel.gridy = GridBagConstraints.RELATIVE;
-
-        methodLabel = makeLabel("Method:", gbcParametersPanel, inputsPanel);
-        inputLabel = makeLabel("Input:", gbcParametersPanel, inputsPanel);
-
-        lambdaLabel = makeLabel("Wavelength [" + lambdaUnits + "]:", gbcParametersPanel, inputsPanel);
-        zLabel = makeLabel("Distance [" + zUnits + "]:", gbcParametersPanel, inputsPanel);
-        inputWLabel = makeLabel("Input Width [" + inputWUnits + "]:", gbcParametersPanel, inputsPanel);
-        inputHLabel = makeLabel("Input Height [" + inputHUnits + "]:", gbcParametersPanel, inputsPanel);
-        outputWLabel = makeLabel("Output Width [" + outputWUnits + "]:", gbcParametersPanel, inputsPanel);
-        outputHLabel = makeLabel("Output Height [" + outputHUnits + "]:", gbcParametersPanel, inputsPanel);
-
-        //Combos and text fields column
-        gbcParametersPanel.anchor = GridBagConstraints.CENTER;
-        gbcParametersPanel.fill = GridBagConstraints.HORIZONTAL;
-        gbcParametersPanel.gridx = 1;
-
-        methodCombo = makeCombo(POPAGATION_METHOD, gbcParametersPanel, inputsPanel);
-        methodCombo.setSelectedIndex(comboIdx);
-        methodCombo.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (methodCombo.getSelectedIndex() == 2) {
-                    outputWField.setEnabled(true);
-                    outputHField.setEnabled(true);
-                } else {
-                    outputWField.setEnabled(false);
-                    outputHField.setEnabled(false);
-                }
-            }
-        });
-        inputCombo = makeCombo(titles, gbcParametersPanel, inputsPanel);
-
-        lambdaField = makeField(lambdaString, gbcParametersPanel, inputsPanel);
-        zField = makeField(zString, gbcParametersPanel, inputsPanel);
-        inputWField = makeField(inputWString, gbcParametersPanel, inputsPanel);
-        inputHField = makeField(inputHString, gbcParametersPanel, inputsPanel);
-        outputWField = makeField(outputWString, gbcParametersPanel, inputsPanel);
-        outputHField = makeField(outputHString, gbcParametersPanel, inputsPanel);
-
-        if (comboIdx != 2) {
-            outputWField.setEnabled(false);
-            outputHField.setEnabled(false);
-        }
-
-        inputsPanel.setBorder(BorderFactory.createTitledBorder("Parameters"));
-
-        //Propagate panel
-        GridBagLayout gblPropPanel = new GridBagLayout();
-        GridBagConstraints gbcPropPanel = new GridBagConstraints();
-        propPanel = new JPanel(gblPropPanel);
-        gbcPropPanel.fill = GridBagConstraints.HORIZONTAL;
-        gbcPropPanel.anchor = GridBagConstraints.CENTER;
-//        gbcPropPanel.insets = new Insets(5, 5, 5, 5);
-        gbcPropPanel.weightx = 0.5;
-        gbcPropPanel.gridx = 0;
-        propagateBtn = makeBtn("Propagate", btnListener, propPanel, gbcPropPanel);
-        gbcPropPanel.gridx = 1;
-        roiChk = makeCheckBox("Same ROI", roiEnabled, propPanel, gbcPropPanel);
-        roiChk.setEnabled(false);
-        propPanel.setBorder(BorderFactory.createTitledBorder(""));
-
-        //Buttons Panel        
-        GridBagLayout gblBtnsPanel = new GridBagLayout();
-        GridBagConstraints gbcBtnsPanel = new GridBagConstraints();
-        btnsPanel = new JPanel(gblBtnsPanel);
-        gbcBtnsPanel.fill = GridBagConstraints.HORIZONTAL;
-        gbcBtnsPanel.anchor = GridBagConstraints.CENTER;
-        gbcBtnsPanel.insets = new Insets(5, 5, 5, 5);
-
-        gbcBtnsPanel.gridx = 0;
-        gbcBtnsPanel.gridwidth = 3;
-//        propagateBtn = makeBtn("Propagate", btnListener, btnsPanel, gbcBtnsPanel);
-        gbcBtnsPanel.weightx = 1;
-        btnsPanel.add(propPanel, gbcBtnsPanel);
-//        gbcBtnsPanel.insets = new Insets(5, 5, 5, 5);
-        gbcBtnsPanel.gridx = 3;
-        gbcBtnsPanel.gridwidth = 1;
-        gbcBtnsPanel.weightx = 0;
-//        gbcBtnsPanel.ipadx = 12;
-        settingsBtn = makeBtn("Settings", btnListener, btnsPanel, gbcBtnsPanel);
-//        gbcBtnsPanel.gridx = 3;
-        batchBtn = makeBtn("Batch", btnListener, btnsPanel, gbcBtnsPanel);
-//        gbcBtnsPanel.gridx = 6;
-//        gbcBtnsPanel.ipadx = 26;
-//        clearBtn = makeBtn("Clear", btnListener, btnsPanel, gbcBtnsPanel);
-
-        gbcBtnsPanel.gridx = 0;
-//        gbcBtnsPanel.gridy = 1;
-//        gbcBtnsPanel.ipadx = 0;
-        gbcBtnsPanel.fill = GridBagConstraints.NONE;
-        gbcBtnsPanel.anchor = GridBagConstraints.WEST;
-//        gbcBtnsPanel.gridx = 0;
-//        gbcBtnsPanel.gridwidth = 2;
-        decBtn = makeBtn("-", btnListener, btnsPanel, gbcBtnsPanel);
-
-        gbcBtnsPanel.fill = GridBagConstraints.HORIZONTAL;
-        gbcBtnsPanel.anchor = GridBagConstraints.CENTER;
-        gbcBtnsPanel.gridx = 1;
-        gbcBtnsPanel.weightx = 1;
-        stepField = makeField(stepString, gbcBtnsPanel, btnsPanel);
-//        stepField.setColumns(2);
-//        stepField.setColumns(3);
-
-        gbcBtnsPanel.fill = GridBagConstraints.NONE;
-        gbcBtnsPanel.anchor = GridBagConstraints.EAST;
-        gbcBtnsPanel.gridx = 2;
-        gbcBtnsPanel.weightx = 0;
-        incBtn = makeBtn("+", btnListener, btnsPanel, gbcBtnsPanel);
-
-        //CheckBox panel
-        GridBagLayout gblChkPanel = new GridBagLayout();
-        GridBagConstraints gbcChkPanel = new GridBagConstraints();
-        checkPanel = new JPanel(gblChkPanel);
-        gbcChkPanel.fill = GridBagConstraints.HORIZONTAL;
-        gbcChkPanel.anchor = GridBagConstraints.CENTER;
-        gbcChkPanel.insets = new Insets(5, 5, 5, 5);
-        gbcChkPanel.gridy = 0;
-        phaseChk = makeCheckBox("Phase", phaseEnabled, checkPanel, gbcChkPanel);
-        amplitudeChk = makeCheckBox("Amplitude", amplitudeEnabled, checkPanel, gbcChkPanel);
-        intensityChk = makeCheckBox("Intensity", intensityEnabled, checkPanel, gbcChkPanel);
-
-        //log panel
-        log = new JTextArea(7, 27);
-        log.setEditable(false);
-        log.setLineWrap(logWrapping);
-        log.setWrapStyleWord(true);
-        logPane = new JScrollPane(log, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
-                JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-
-        DefaultCaret caret = (DefaultCaret) log.getCaret(); //autoscroll
-        caret.setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
-
-        log.append(LOG_HEADER);
-
-        popup = new JPopupMenu();
-        PopupListener popupListener = new PopupListener(popup);
-        ItemListener itemListener = new ItemListener();
-
-        copyItem = new JMenuItem("Copy");
-        copyItem.addActionListener(itemListener);
-        popup.add(copyItem);
-
-        copyAllItem = new JMenuItem("Copy All");
-        copyAllItem.addActionListener(itemListener);
-        popup.add(copyAllItem);
-
-        popup.addSeparator();
-
-        wrapItem = new JCheckBoxMenuItem("Wrap text", logWrapping);
-        wrapItem.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                JCheckBoxMenuItem source = (JCheckBoxMenuItem) e.getSource();
-
-                log.setLineWrap(source.isSelected());
-            }
-        });
-        popup.add(wrapItem);
-
-        popup.addSeparator();
-
-        clearItem = new JMenuItem("Clear");
-        clearItem.addActionListener(itemListener);
-        popup.add(clearItem);
-
-        log.addMouseListener(popupListener);
-
-        //
-        GridBagLayout gbl = new GridBagLayout();
-        setLayout(gbl);
-        GridBagConstraints gbc = new GridBagConstraints();
-
-        gbc.anchor = GridBagConstraints.CENTER;
-        gbc.fill = GridBagConstraints.BOTH;
-        gbc.gridx = 0;
-        gbc.gridheight = 6;
-        add(inputsPanel, gbc);
-        gbc.gridx = 1;
-        gbc.gridheight = 3;
-        gbc.insets = new Insets(5, 5, 5, 5);
-        gbc.weighty = 1;
-        add(logPane, gbc);
-        gbc.insets = new Insets(0, 0, 0, 0);
-        gbc.gridheight = 1;
-        gbc.weighty = 0;
-        add(checkPanel, gbc);
-        gbc.gridheight = 2;
-        add(btnsPanel, gbc);
-
-//        ImageIcon icon = new ImageIcon("/icon.png");
-//        setIconImage(icon.getImage());
-//        setIconImage(Toolkit.getDefaultToolkit().getImage("icon.png"));
-        enableSteps(false);
-        setIconImage(Toolkit.getDefaultToolkit().getImage(getClass().getResource("/icon.png")));
-        pack();
-
-//        System.out.println(propagateBtn.getSize());
-//        System.out.println(settingsBtn.getSize());
-//        System.out.println(clearBtn.getSize());
-//        System.out.println(getSize());
-        inputCombo.setPreferredSize(methodCombo.getSize());
+        initComponents();
 
         //adds this class as ImageListener
         ImagePlus.addImageListener(this);
 
+//        DefaultCaret caret = (DefaultCaret) log.getCaret(); //autoscroll
+//        caret.setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
     }
 
+    /**
+     * Fills the arrays with the information of the open images.
+     */
     private void getOpenedImages() {
+        //gets the IDs of the opened images
         windowsId = WindowManager.getIDList();
+
         if (windowsId == null) {
+            //if there are no images open, just adds <none> option
             titles = new String[]{"<none>"};
         } else {
-            //Titles for input
-            titles = new String[windowsId.length];
+            //titles for both inputs, with <none> option
+            titles = new String[windowsId.length + 1];
+            titles[0] = "<none>";
             for (int i = 0; i < windowsId.length; i++) {
                 ImagePlus imp = WindowManager.getImage(windowsId[i]);
                 if (imp != null) {
-                    titles[i] = imp.getTitle();
+                    titles[i + 1] = imp.getTitle();
                 } else {
-                    titles[i] = "";
+                    titles[i + 1] = "";
                 }
             }
         }
     }
 
-    // <editor-fold defaultstate="collapsed" desc="Frame methods">
-    private JLabel makeLabel(String label, GridBagConstraints gbc1, JPanel panel) {
-        JLabel jLabel = new JLabel(label);
-        panel.add(jLabel, gbc1);
-        return jLabel;
-    }
-
-    private JTextField makeField(String txt, GridBagConstraints gbc1, JPanel panel) {
-        JTextField jTextField = new JTextField(txt);
-        panel.add(jTextField, gbc1);
-        return jTextField;
-    }
-
-    private JComboBox makeCombo(String[] items, GridBagConstraints gbc1, JPanel panel) {
-        JComboBox combo = new JComboBox<String>(new DefaultComboBoxModel<String>(items));
-        panel.add(combo, gbc1);
-        return combo;
-    }
-
-    private JButton makeBtn(String label, ActionListener listener, JPanel panel, GridBagConstraints gbc) {
-        JButton btn = new JButton(label);
-        panel.add(btn, gbc);
-        btn.addActionListener(listener);
-        return btn;
-    }
-
-    private JCheckBox makeCheckBox(String label, boolean selected, JPanel panel, GridBagConstraints gbc) {
-        JCheckBox chk = new JCheckBox(label, selected);
-        panel.add(chk, gbc);
-        return chk;
-    }
-    // </editor-fold>
-
+    /**
+     * Saves the preferences when the frame is closed.
+     */
     private void savePrefs() {
+        //frame location
+        pref.putInt(MAIN_FRAME_LOC_X, getLocation().x);
+        pref.putInt(MAIN_FRAME_LOC_Y, getLocation().y);
+
+        //method combo idx
         pref.putInt(METHOD_IDX, methodCombo.getSelectedIndex());
 
+        //parameters text
         pref.put(LAMBDA, lambdaField.getText());
         pref.put(DISTANCE, zField.getText());
         pref.put(INPUT_WIDTH, inputWField.getText());
@@ -500,17 +235,33 @@ public class MainFrame extends JFrame implements ImageListener, PreferencesKeys 
 
         pref.put(STEP, stepField.getText());
 
+        //same roi option
         pref.putBoolean(ROI_CHECKED, roiChk.isSelected());
+
+        //outputs
         pref.putBoolean(PHASE_CHECKED, phaseChk.isSelected());
         pref.putBoolean(AMPLITUDE_CHECKED, amplitudeChk.isSelected());
         pref.putBoolean(INTENSITY_CHECKED, intensityChk.isSelected());
+        pref.putBoolean(REAL_CHECKED, realChk.isSelected());
+        pref.putBoolean(IMAGINARY_CHECKED, imaginaryChk.isSelected());
+
+        pref.putBoolean(RELATION_LOCK, lockBtn.isSelected());
 
         pref.putBoolean(LOG_WRAPPING, log.getLineWrap());
     }
 
+    /**
+     * Loads the preferences when the plugin starts.
+     */
     private void loadPrefs() {
-        comboIdx = pref.getInt(METHOD_IDX, 0);
+        //frame location
+        locX = pref.getInt(MAIN_FRAME_LOC_X, 300);
+        locY = pref.getInt(MAIN_FRAME_LOC_Y, 300);
 
+        //m,ethod combo idx
+        methodIdx = pref.getInt(METHOD_IDX, 0);
+
+        //parameters text
         lambdaString = pref.get(LAMBDA, "");
         zString = pref.get(DISTANCE, "");
         inputWString = pref.get(INPUT_WIDTH, "");
@@ -520,512 +271,194 @@ public class MainFrame extends JFrame implements ImageListener, PreferencesKeys 
 
         stepString = pref.get(STEP, "");
 
-        lambdaUnits = pref.get(LAMBDA_UNITS, "nm");
-        zUnits = pref.get(DISTANCE_UNITS, "m");
-        inputWUnits = pref.get(INPUT_WIDTH_UNITS, "mm");
-        inputHUnits = pref.get(INPUT_HEIGHT_UNITS, "mm");
-        outputWUnits = pref.get(OUTPUT_WIDTH_UNITS, "mm");
-        outputHUnits = pref.get(OUTPUT_HEIGHT_UNITS, "mm");
-
+        //same roi option
         roiEnabled = pref.getBoolean(ROI_CHECKED, false);
+
+        //outputs
         phaseEnabled = pref.getBoolean(PHASE_CHECKED, false);
         amplitudeEnabled = pref.getBoolean(AMPLITUDE_CHECKED, false);
         intensityEnabled = pref.getBoolean(INTENSITY_CHECKED, false);
+        realEnabled = pref.getBoolean(REAL_CHECKED, false);
+        imaginaryEnabled = pref.getBoolean(IMAGINARY_CHECKED, false);
+
+        relationLock = pref.getBoolean(RELATION_LOCK, false);
 
         logWrapping = pref.getBoolean(LOG_WRAPPING, true);
+
+        //parameters units
+        loadUnitsPrefs();
+
+        //propagation
+        loadPropagationPrefs();
+
+        //scaling
+        loadScalingPrefs();
     }
 
-    public void updateLog(boolean useSep, String s) {
-        if (useSep) {
+    /**
+     * Loads the units of the parameters.
+     */
+    private void loadUnitsPrefs() {
+        lambdaUnits = pref.get(LAMBDA_UNITS, "nm");
+        zUnits = pref.get(DISTANCE_UNITS, "m");
+        inputSizeUnits = pref.get(INPUT_SIZE_UNITS, "mm");
+//        inputWUnits = pref.get(INPUT_WIDTH_UNITS, "mm");
+//        inputHUnits = pref.get(INPUT_HEIGHT_UNITS, "mm");
+        outputSizeUnits = pref.get(OUTPUT_SIZE_UNITS, "mm");
+//        outputWUnits = pref.get(OUTPUT_WIDTH_UNITS, "mm");
+//        outputHUnits = pref.get(OUTPUT_HEIGHT_UNITS, "mm");
+    }
+
+    /**
+     * Loads filtering and illumination options.
+     */
+    private void loadPropagationPrefs() {
+        filterEnabled = pref.getBoolean(IS_FILTER_ENABLED, true);
+        isPlane = pref.getBoolean(IS_PLANE, true);
+
+        curvRadius = pref.getFloat(CURV_RADIUS, 1E6f);
+    }
+
+    /**
+     * Loads scaling options.
+     */
+    private void loadScalingPrefs() {
+        amplitudeLogSelected = pref.getBoolean(AMPLITUDE_LOG, true);
+        intensityLogSelected = pref.getBoolean(INTENSITY_LOG, true);
+
+        phaseByteSelected = pref.getBoolean(PHASE_8_BIT, true);
+        amplitudeByteSelected = pref.getBoolean(AMPLITUDE_8_BIT, true);
+        intensityByteSelected = pref.getBoolean(INTENSITY_8_BIT, true);
+        realByteSelected = pref.getBoolean(REAL_8_BIT, true);
+        imaginaryByteSelected = pref.getBoolean(IMAGINARY_8_BIT, true);
+    }
+
+    /**
+     * Updates units labels.
+     */
+    public void updateUnitsPrefs() {
+        loadUnitsPrefs();
+
+        lambdaLabel.setText("Wavelength [" + lambdaUnits + "]:");
+        zLabel.setText("Distance [" + zUnits + "]:");
+//        inputWLabel.setText("Input width [" + inputWUnits + "]:");
+//        inputHLabel.setText("Input height [" + inputHUnits + "]:");
+        inputWLabel.setText("Input width [" + inputSizeUnits + "]:");
+        inputHLabel.setText("Input height [" + inputSizeUnits + "]:");
+//        outputWLabel.setText("Output width [" + outputWUnits + "]:");
+//        outputHLabel.setText("Output height [" + outputHUnits + "]:");
+        outputWLabel.setText("Output width [" + outputSizeUnits + "]:");
+        outputHLabel.setText("Output height [" + outputSizeUnits + "]:");
+    }
+
+    /**
+     * Updates filtering and illumination options.
+     */
+    public void updatePropagationPrefs() {
+        loadPropagationPrefs();
+
+        if (roiChk.isEnabled()) {
+            roiChk.setEnabled(filterEnabled);
+        }
+    }
+
+    /**
+     * Updates scaling options.
+     */
+    public void updateScalingPrefs() {
+        loadScalingPrefs();
+    }
+
+    /**
+     * Posts a message (s) on the log. If useSeparator is true prints a
+     * separator before the message.
+     *
+     * @param useSeparator
+     * @param s
+     */
+    public void updateLog(boolean useSeparator, String s) {
+        if (useSeparator) {
             log.append(LOG_SEPARATOR);
         }
         log.append(s);
     }
 
-    public void updateUnits() {
-        lambdaUnits = pref.get(LAMBDA_UNITS, "nm");
-        zUnits = pref.get(DISTANCE_UNITS, "m");
-        inputWUnits = pref.get(INPUT_WIDTH_UNITS, "mm");
-        inputHUnits = pref.get(INPUT_HEIGHT_UNITS, "mm");
-        outputWUnits = pref.get(OUTPUT_WIDTH_UNITS, "mm");
-        outputHUnits = pref.get(OUTPUT_HEIGHT_UNITS, "mm");
-
-        lambdaLabel.setText("Wavelength [" + lambdaUnits + "]:");
-        zLabel.setText("Distance [" + zUnits + "]:");
-        inputWLabel.setText("Input Width [" + inputWUnits + "]:");
-        inputHLabel.setText("Input Height [" + inputHUnits + "]:");
-        outputWLabel.setText("Output Width [" + outputWUnits + "]:");
-        outputHLabel.setText("Output Height [" + outputHUnits + "]:");
-    }
-
-    public void enableSteps(boolean enabled) {
-        roiChk.setEnabled(enabled);
+    /**
+     * Enables the fields after a propagation is performed. - Same ROI Checkbox
+     * - Increase and decrease buttons - Step TextField - Batch button
+     *
+     * @param enabled
+     */
+    public void enableAfterPropagationOpt(boolean enabled) {
+        if (filterEnabled) {
+            roiChk.setEnabled(enabled);
+        }
         decBtn.setEnabled(enabled);
         stepField.setEnabled(enabled);
         incBtn.setEnabled(enabled);
         batchBtn.setEnabled(enabled);
     }
 
-    public void setStepDistance(float z) {
-        zStep = z;
+    /**
+     * Sets the distance to be used when the increase or decrease buttons are
+     * activated, intended to be used after a propagation is performed.
+     */
+    public void setStepDistance() {
+        zStepUser = zUser;
+        zStepUm = zUm;
     }
 
+    /**
+     * Returns an array containing the parameters used in the last propagation.
+     *
+     * @param useZ
+     * @return
+     */
     public String[] getFormattedParameters(boolean useZ) {
         String[] s = new String[]{
-            imageTitle,
-            //            String.format(Locale.US, "%.3f %s", umToUnits(lambda, lambdaUnits), lambdaUnits),
-            //            String.format(Locale.US, "%.3f %s", umToUnits(useZ ? z : zStep, zUnits), zUnits),
-            //            String.format(Locale.US, "%.3f %s", umToUnits(inputW, inputWUnits), inputWUnits),
-            //            String.format(Locale.US, "%.3f %s", umToUnits(inputH, inputHUnits), inputHUnits),
-            //            String.format(Locale.US, "%.3f %s", umToUnits(outputW, outputWUnits), outputWUnits),
-            //            String.format(Locale.US, "%.3f %s", umToUnits(outputH, outputHUnits), outputHUnits)
-            "" + df.format(umToUnits(lambda, lambdaUnits)) + " " + lambdaUnits,
-            "" + df.format(umToUnits(useZ ? z : zStep, zUnits)) + " " + zUnits,
-            "" + df.format(umToUnits(inputW, inputWUnits)) + " " + inputWUnits,
-            "" + df.format(umToUnits(inputH, inputHUnits)) + " " + inputHUnits,
-            "" + df.format(umToUnits(outputW, outputWUnits)) + " " + outputWUnits,
-            "" + df.format(umToUnits(outputH, outputHUnits)) + " " + outputHUnits
+            realTitle,
+            imaginaryTitle,
+            df.format(lambdaUser) + " " + lambdaUnits,
+            df.format(useZ ? zUser : zStepUser) + " " + zUnits,
+            //            df.format(inputWUser) + " " + inputWUnits,
+            //            df.format(inputHUser) + " " + inputHUnits,
+            df.format(inputWUser) + " " + inputSizeUnits,
+            df.format(inputHUser) + " " + inputSizeUnits,
+            //            df.format(outputWUser) + " " + outputWUnits,
+            //            df.format(outputHUser) + " " + outputHUnits
+            df.format(outputWUser) + " " + outputSizeUnits,
+            df.format(outputHUser) + " " + outputSizeUnits
         };
 
         return s;
     }
 
-    private void propagate() {
-        if (filterFrame != null && filterFrame.isVisible()) {
-            filterFrame.setState(Frame.NORMAL);
-            filterFrame.toFront();
-            return;
-        }
-
-        imageTitle = inputCombo.getSelectedItem().toString();
-        if (imageTitle.equalsIgnoreCase("<none>")) {
-//            IJ.noImage();
-            JOptionPane.showMessageDialog(this, "The are no images open.", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        ImagePlus imp = WindowManager.getImage(imageTitle);
-        ImageProcessor ip = imp.getProcessor();
-
-        newID = imp.getID();
-        newM = ip.getWidth();
-        newN = ip.getHeight();
-
-        boolean differentDimensions = oldM != newM || oldN != newN;
-        boolean differentID = oldID != imp.getID();
-
-//        if (differentDimensions || differentID) {
-        data.setInputImage(ip.getFloatArray());
-        data.setDimensions(newM, newN);
-//        }
-
-        lambdaString = lambdaField.getText();
-        try {
-            lambda = Float.parseFloat(lambdaField.getText());
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Please insert a valid wavelength.", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        zString = zField.getText();
-        try {
-            z = Float.parseFloat(zField.getText());
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Please insert a valid distance.", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        inputWString = inputWField.getText();
-        try {
-            inputW = Float.parseFloat(inputWField.getText());
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Please insert a valid input width.", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        inputHString = inputWField.getText();
-        try {
-            inputH = Float.parseFloat(inputHField.getText());
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Please insert a valid input height.", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        methodIdx = methodCombo.getSelectedIndex();
-
-        if (methodIdx == 2) {
-            outputWString = outputWField.getText();
-            try {
-                outputW = Float.parseFloat(outputWField.getText());
-            } catch (NumberFormatException e) {
-                JOptionPane.showMessageDialog(this, "Please insert a valid output width.", "Error", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-
-            outputHString = outputHField.getText();
-            try {
-                outputH = Float.parseFloat(outputHField.getText());
-            } catch (NumberFormatException e) {
-                JOptionPane.showMessageDialog(this, "Please insert a valid output height.", "Error", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-
-//            System.out.println("" + outputW);
-//            System.out.println("" + outputH);
-//            System.out.println("---");
-        }
-
-        fixUnits();
-
-        if (methodIdx == 2) {
-//            System.out.println("" + outputW);
-//            System.out.println("" + outputH);
-
-            data.setParameters(lambda, z, inputW, inputH, outputW, outputH);
-        } else {
-            data.setParameters(lambda, z, inputW, inputH);
-        }
-
-        phaseEnabled = phaseChk.isSelected();
-        amplitudeEnabled = amplitudeChk.isSelected();
-        intensityEnabled = intensityChk.isSelected();
-
-        if (roiChk.isEnabled() && roiChk.isSelected() && !differentDimensions) {
-            if (differentID) {
-                data.center();
-            }
-
-            if (pref.getBoolean(IS_PLANE, true)) {
-                data.propagate(methodIdx);
-            } else {
-                float curvRadius = unitsToum(pref.getFloat(CURV_RADIUS, 1), zUnits);
-                data.propagate(methodIdx, true, curvRadius);
-            }
-
-            String[] parameters = getFormattedParameters(true);
-
-//        parent.updateLog(separator);
-            updateLog(true,
-                    "\nMethod: " + POPAGATION_METHOD[methodIdx]
-                    + "\nInput: " + parameters[0]
-                    + "\nWavelength: " + parameters[1]
-                    + "\nDistance: " + parameters[2]
-                    + "\nInput Width: " + parameters[3]
-                    + "\nInput Height: " + parameters[4]);
-
-            if (methodIdx == 2) {
-                updateLog(false,
-                        "\nOutput Width: " + parameters[5]
-                        + "\nOutput Height: " + parameters[6]);
-            }
-
-            float[][] field = data.getOutputField();
-            data.setFiltered(true);
-            setStepDistance(data.getZ());
-
-            if (phaseEnabled) {
-                ImageProcessor ip1 = new FloatProcessor(ArrayUtils.phase(field));
-                ImagePlus imp1 = new ImagePlus("Phase; z = " + parameters[2],
-                        pref.getBoolean(PHASE_8_BIT, false) ? ip1.convertToByteProcessor() : ip1);
-                imp1.show();
-            }
-
-            if (amplitudeEnabled) {
-                ImageProcessor ip2 = new FloatProcessor(ArrayUtils.modulus(field));
-                if (pref.getBoolean(AMPLITUDE_LOG, false)) {
-                    ip2.log();
-                }
-
-                ImagePlus imp2 = new ImagePlus("Amplitude; z = " + parameters[2],
-                        pref.getBoolean(AMPLITUDE_8_BIT, false) ? ip2.convertToByteProcessor() : ip2);
-                imp2.show();
-            }
-
-            if (intensityEnabled) {
-                ImageProcessor ip3 = new FloatProcessor(ArrayUtils.modulusSq(field));
-                if (pref.getBoolean(INTENSITY_LOG, false)) {
-                    ip3.log();
-                }
-
-                ImagePlus imp3 = new ImagePlus("Intensity; z = " + parameters[2],
-                        pref.getBoolean(INTENSITY_8_BIT, false) ? ip3.convertToByteProcessor() : ip3);
-                imp3.show();
-            }
-
-            setImageProps();
-        } else {
-            data.setOutputs(phaseEnabled, amplitudeEnabled, intensityEnabled);
-
-            if (filterFrame == null || !filterFrame.isDisplayable()) {
-                filterFrame = new FilterFrame(this, methodIdx);
-                filterFrame.setVisible(true);
-            }
-        }
-    }
-
-    private void settings() {
-        if (settingsFrame == null || !settingsFrame.isDisplayable()) {
-            settingsFrame = new SettingsFrame(this);
-            settingsFrame.setVisible(true);
-        } else {
-            settingsFrame.setState(Frame.NORMAL);
-            settingsFrame.toFront();
-        }
-    }
-
-    private void increaseOrDecrease(boolean inc) {
-//        if (!data.isFiltered()) {
-//            IJ.error("   In order to use \"+\" and \"-\" buttons, you\n"
-//                    + "need to use the propagate function before.");
-//            JOptionPane.showMessageDialog(this, "   In order to use \"+\" and \"-\" buttons, you\n"
-//                    + "need to use the propagate function before.", "Error", JOptionPane.ERROR_MESSAGE);
-//            return;
-//        }
-
-        try {
-            stepString = stepField.getText();
-            step = Float.parseFloat(stepString);
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Please insert a valid step.", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        if (zUnits.equals("nm")) {
-            step *= 1E-3f;
-        } else if (zUnits.equals("mm")) {
-            step *= 1E3f;
-        } else if (zUnits.equals("cm")) {
-            step *= 1E4f;
-        } else if (zUnits.equals("m")) {
-            step *= 1E6f;
-        }
-
-        if (inc) {
-            zStep += step;
-        } else {
-            zStep -= step;
-        }
-
-        lambdaString = lambdaField.getText();
-        try {
-            lambda = Float.parseFloat(lambdaField.getText());
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Please insert a valid wavelength.", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        inputWString = inputWField.getText();
-        try {
-            inputW = Float.parseFloat(inputWField.getText());
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Please insert a valid input width.", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        inputHString = inputWField.getText();
-        try {
-            inputH = Float.parseFloat(inputHField.getText());
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Please insert a valid input height.", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        methodIdx = methodCombo.getSelectedIndex();
-
-        if (methodIdx == 2) {
-            outputWString = outputWField.getText();
-            try {
-                outputW = Float.parseFloat(outputWField.getText());
-            } catch (NumberFormatException e) {
-                JOptionPane.showMessageDialog(this, "Please insert a valid output width.", "Error", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-
-            outputHString = outputHField.getText();
-            try {
-                outputH = Float.parseFloat(outputHField.getText());
-            } catch (NumberFormatException e) {
-                JOptionPane.showMessageDialog(this, "Please insert a valid output height.", "Error", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-        }
-
-        fixUnits();
-//        data.setDistance(zStep);
-
-        if (methodIdx == 2) {
-            data.setParameters(lambda, zStep, inputW, inputH, outputW, outputH);
-        } else {
-            data.setParameters(lambda, zStep, inputW, inputH);
-        }
-
-        if (pref.getBoolean(IS_PLANE, true)) {
-            data.propagate(methodIdx);
-        } else {
-            float curvRadius = unitsToum(pref.getFloat(CURV_RADIUS, 1), zUnits);
-            data.propagate(methodIdx, true, curvRadius);
-        }
-
-        String[] parameters = getFormattedParameters(false);
-//        methodIdx = methodCombo.getSelectedIndex();
-
-//        log.append(separator);
-        updateLog(true,
-                "\nMethod: " + POPAGATION_METHOD[methodIdx]
-                + "\nInput: " + parameters[0]
-                + "\nWavelength: " + parameters[1]
-                + "\nDistance: " + parameters[2]
-                + "\nInput Width: " + parameters[3]
-                + "\nInput Height: " + parameters[4]);
-
-        if (methodIdx == 2) {
-            updateLog(false,
-                    "\nOutput Width: " + parameters[5]
-                    + "\nOutput Height: " + parameters[6]);
-        }
-
-        float[][] field = data.getOutputField();
-        String label = "z = " + df.format(umToUnits(zStep, zUnits)) + " " + zUnits;
-
-        if (phaseChk.isSelected()) {
-            ImageProcessor ip1 = new FloatProcessor(ArrayUtils.phase(field));
-            ImagePlus imp1 = new ImagePlus("Phase; " + label,
-                    pref.getBoolean(PHASE_8_BIT, false) ? ip1.convertToByteProcessor() : ip1);
-            imp1.show();
-        }
-
-        if (amplitudeChk.isSelected()) {
-            ImageProcessor ip2 = new FloatProcessor(ArrayUtils.modulus(field));
-            if (pref.getBoolean(AMPLITUDE_LOG, false)) {
-                ip2.log();
-            }
-
-            ImagePlus imp2 = new ImagePlus("Amplitude; " + label,
-                    pref.getBoolean(AMPLITUDE_8_BIT, false) ? ip2.convertToByteProcessor() : ip2);
-
-            imp2.show();
-        }
-
-        if (intensityChk.isSelected()) {
-            ImageProcessor ip3 = new FloatProcessor(ArrayUtils.modulusSq(field));
-            if (pref.getBoolean(INTENSITY_LOG, false)) {
-                ip3.log();
-            }
-
-            ImagePlus imp3 = new ImagePlus("Intensity; " + label,
-                    pref.getBoolean(INTENSITY_8_BIT, false) ? ip3.convertToByteProcessor() : ip3);
-
-            imp3.show();
-        }
-    }
-
-    private void batch() {
-//        if (!data.isFiltered()) {
-//            IJ.error("In order to use Automatic propagation, you\n"
-//                    + "need to use the propagate function before.");
-//            JOptionPane.showMessageDialog(this, "In order to use Automatic propagation, you\n"
-//                    + "need to use the propagate function before.", "Error", JOptionPane.ERROR_MESSAGE);
-//            return;
-//        }
-
-        if (batchFrame != null && batchFrame.isVisible()) {
-            batchFrame.setState(Frame.NORMAL);
-            batchFrame.toFront();
-            return;
-        }
-
-        lambdaString = lambdaField.getText();
-        try {
-            lambda = Float.parseFloat(lambdaField.getText());
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Please insert a valid wavelength.", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        inputWString = inputWField.getText();
-        try {
-            inputW = Float.parseFloat(inputWField.getText());
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Please insert a valid input width.", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        inputHString = inputWField.getText();
-        try {
-            inputH = Float.parseFloat(inputHField.getText());
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Please insert a valid input height.", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        methodIdx = methodCombo.getSelectedIndex();
-
-        if (methodIdx == 2) {
-            outputWString = outputWField.getText();
-            try {
-                outputW = Float.parseFloat(outputWField.getText());
-            } catch (NumberFormatException e) {
-                JOptionPane.showMessageDialog(this, "Please insert a valid output width.", "Error", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-
-            outputHString = outputHField.getText();
-            try {
-                outputH = Float.parseFloat(outputHField.getText());
-            } catch (NumberFormatException e) {
-                JOptionPane.showMessageDialog(this, "Please insert a valid output height.", "Error", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-        }
-
-        fixUnits();
-
-        if (methodIdx == 2) {
-            data.setParameters(lambda, 1f, inputW, inputH, outputW, outputH);
-        } else {
-            data.setParameters(lambda, 1f, inputW, inputH);
-        }
-
-        phaseEnabled = phaseChk.isSelected();
-        amplitudeEnabled = amplitudeChk.isSelected();
-        intensityEnabled = intensityChk.isSelected();
-
-        data.setOutputs(phaseEnabled, amplitudeEnabled, intensityEnabled);
-
-        if (batchFrame == null || !batchFrame.isDisplayable()) {
-            batchFrame = new BatchFrame(this, methodIdx);
-            batchFrame.setVisible(true);
-        }
-    }
-
+    /**
+     * Converts to um the user inputs.
+     */
     private void fixUnits() {
-
-        lambda = unitsToum(lambda, lambdaUnits);
-        z = unitsToum(z, zUnits);
-        inputW = unitsToum(inputW, inputWUnits);
-        inputH = unitsToum(inputH, inputHUnits);
+        lambdaUm = unitsToum(lambdaUser, lambdaUnits);
+        zUm = unitsToum(zUser, zUnits);
+//        inputWUm = unitsToum(inputWUser, inputWUnits);
+//        inputHUm = unitsToum(inputHUser, inputHUnits);
+        inputWUm = unitsToum(inputWUser, inputSizeUnits);
+        inputHUm = unitsToum(inputHUser, inputSizeUnits);
 
         if (methodIdx == 2) {
-            outputW = unitsToum(outputW, outputWUnits);
-            outputH = unitsToum(outputH, outputHUnits);
+//            outputWUm = unitsToum(outputWUser, outputWUnits);
+//            outputHUm = unitsToum(outputHUser, outputHUnits);
+            outputWUm = unitsToum(outputWUser, outputSizeUnits);
+            outputHUm = unitsToum(outputHUser, outputSizeUnits);
         }
     }
 
-    private float umToUnits(float val, String units) {
-
-        if (units.equals("nm")) {
-            return val * 1E3f;
-        } else if (units.equals("mm")) {
-            return val * 1E-3f;
-        } else if (units.equals("cm")) {
-            return val * 1E-4f;
-        } else if (units.equals("m")) {
-            return val * 1E-6f;
-        }
-
-        return val;
-    }
-
+    /**
+     * Helper method to convert from {units} to um.
+     *
+     * @param val
+     * @param units
+     * @return
+     */
     private float unitsToum(float val, String units) {
         if (units.equals("nm")) {
             return val * 1E-3f;
@@ -1040,133 +473,1354 @@ public class MainFrame extends JFrame implements ImageListener, PreferencesKeys 
         return val;
     }
 
+    /**
+     * Sets the image properties to know if the inputs change, useful when
+     * filtering and same roi options are enabled.
+     */
     public void setImageProps() {
-        oldID = newID;
-        oldM = newM;
-        oldN = newN;
+        oldIDReal = newIDReal;
+        oldMReal = newMReal;
+        oldNReal = newNReal;
+
+        oldIDImaginary = newIDImaginary;
+        oldMImaginary = newMImaginary;
+        oldNImaginary = newNImaginary;
     }
 
-    public void setFftID(int id) {
-        fftID = id;
+    /**
+     * Sets the input images from the user selections. Returns false if an error
+     * occurs.
+     *
+     * @param realIdx
+     * @param imaginaryIdx
+     * @return success
+     */
+    private boolean setInputImages(int realIdx, int imaginaryIdx) {
+        realTitle = titles[realIdx];
+        imaginaryTitle = titles[imaginaryIdx];
+
+        boolean hasReal = !realTitle.equalsIgnoreCase("<none>");
+        boolean hasImaginary = !imaginaryTitle.equalsIgnoreCase("<none>");
+
+        if (!hasReal && !hasImaginary) {
+            //if no inputs are chosen shows an error message
+            JOptionPane.showMessageDialog(this, "Please select at least one input image.", "Error", JOptionPane.ERROR_MESSAGE);
+            return false;
+        } else if (hasReal && hasImaginary) {
+            ImagePlus realImp = WindowManager.getImage(windowsId[realIdx - 1]);
+            ImageProcessor realIp = realImp.getProcessor();
+
+            newIDReal = realImp.getID();
+            newMReal = realIp.getWidth();
+            newNReal = realIp.getHeight();
+
+            ImagePlus imaginaryImp = WindowManager.getImage(windowsId[imaginaryIdx - 1]);
+            ImageProcessor imaginaryIp = imaginaryImp.getProcessor();
+
+            newIDImaginary = imaginaryImp.getID();
+            newMImaginary = imaginaryIp.getWidth();
+            newNImaginary = imaginaryIp.getHeight();
+
+            //checks dimensions
+            if (newMReal != newMImaginary || newNReal != newNImaginary) {
+                JOptionPane.showMessageDialog(this, "Input images must have the same dimensions.", "Error", JOptionPane.ERROR_MESSAGE);
+                return false;
+            }
+
+            M = newMReal;
+            N = newNReal;
+            data.setInputImages(M, N, realIp.getFloatArray(), imaginaryIp.getFloatArray());
+
+        } else if (hasReal && !hasImaginary) {
+            ImagePlus realImp = WindowManager.getImage(windowsId[realIdx - 1]);
+            ImageProcessor realIp = realImp.getProcessor();
+
+            newIDReal = realImp.getID();
+            newMReal = realIp.getWidth();
+            newNReal = realIp.getHeight();
+
+            newIDImaginary = Integer.MAX_VALUE;
+            newMImaginary = -1;
+            newNImaginary = -1;
+
+            M = newMReal;
+            N = newNReal;
+            data.setInputImages(M, N, realIp.getFloatArray(), null);
+
+        } else if (!hasReal && hasImaginary) {
+            ImagePlus imaginaryImp = WindowManager.getImage(windowsId[imaginaryIdx - 1]);
+            ImageProcessor imaginaryIp = imaginaryImp.getProcessor();
+
+            newIDReal = Integer.MAX_VALUE;
+            newMReal = -1;
+            newNReal = -1;
+
+            newIDImaginary = imaginaryImp.getID();
+            newMImaginary = imaginaryIp.getWidth();
+            newNImaginary = imaginaryIp.getHeight();
+
+            M = newMImaginary;
+            N = newNImaginary;
+            data.setInputImages(M, N, null, imaginaryIp.getFloatArray());
+        }
+
+        return true;
     }
 
-    @Override
-    public void imageOpened(ImagePlus imp) {
-        int idx = inputCombo.getSelectedIndex();
+    /**
+     * Sets the input parameters from the user selections. Returns false if an
+     * error occurs.
+     *
+     * @return success
+     */
+    private boolean setParameters() {
+        //lambda
+        try {
+            lambdaUser = Float.parseFloat(lambdaField.getText());
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Please insert a valid wavelength.", "Error", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
 
-        getOpenedImages();
-        inputCombo.setModel(new DefaultComboBoxModel<String>(titles));
-        inputCombo.setSelectedIndex(idx);
+        //z
+        try {
+            zUser = Float.parseFloat(zField.getText());
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Please insert a valid distance.", "Error", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+
+        //input width
+        try {
+            inputWUser = Float.parseFloat(inputWField.getText());
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Please insert a valid input width.", "Error", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+
+        //input height
+        try {
+            inputHUser = Float.parseFloat(inputHField.getText());
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Please insert a valid input height.", "Error", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+
+        methodIdx = methodCombo.getSelectedIndex();
+
+        //output width and height (Fresnel-Bluestein)
+        if (methodIdx == 2) {
+            try {
+                outputWUser = Float.parseFloat(outputWField.getText());
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(this, "Please insert a valid output width.", "Error", JOptionPane.ERROR_MESSAGE);
+                return false;
+            }
+
+            try {
+                outputHUser = Float.parseFloat(outputHField.getText());
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(this, "Please insert a valid output height.", "Error", JOptionPane.ERROR_MESSAGE);
+                return false;
+            }
+        }
+
+        fixUnits();
+
+        //sets the parameters, if methodIdx == 2 -> Fresnel-Bluestein
+        if (methodIdx == 2) {
+            data.setParameters(lambdaUm, zUm, inputWUm, inputHUm, outputWUm, outputHUm);
+        } else {
+            data.setParameters(lambdaUm, zUm, inputWUm, inputHUm);
+        }
+
+        phaseEnabled = phaseChk.isSelected();
+        amplitudeEnabled = amplitudeChk.isSelected();
+        intensityEnabled = intensityChk.isSelected();
+        realEnabled = realChk.isSelected();
+        imaginaryEnabled = imaginaryChk.isSelected();
+
+        //if there isn't at least one output image selected returns error
+        if (!phaseEnabled && !amplitudeEnabled && !intensityEnabled && !realEnabled && !imaginaryEnabled) {
+            JOptionPane.showMessageDialog(this, "Please select at least one output.", "Error", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+
+        return true;
     }
 
+    /**
+     * Sets the input parameters from the user selections. Returns false if an
+     * error occurs.
+     *
+     * @return
+     */
+    private boolean setParameters(boolean inc) {
+        //lambda
+        try {
+            lambdaUser = Float.parseFloat(lambdaField.getText());
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Please insert a valid wavelength.", "Error", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+
+        //z - step
+        try {
+            stepUser = Float.parseFloat(stepField.getText());
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Please insert a valid step.", "Error", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+        
+        stepUm = stepUser;
+
+        if (zUnits.equals("nm")) {
+            stepUm = stepUser * 1E-3f;
+        } else if (zUnits.equals("mm")) {
+            stepUm = stepUser * 1E3f;
+        } else if (zUnits.equals("cm")) {
+            stepUm = stepUser * 1E4f;
+        } else if (zUnits.equals("m")) {
+            stepUm = stepUser * 1E6f;
+        }
+
+        zStepUser = inc ? zStepUser + stepUser : zStepUser - stepUser;
+        zStepUm = inc ? zStepUm + stepUm : zStepUm - stepUm;
+
+        //input width
+        try {
+            inputWUser = Float.parseFloat(inputWField.getText());
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Please insert a valid input width.", "Error", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+
+        //input height
+        try {
+            inputHUser = Float.parseFloat(inputHField.getText());
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Please insert a valid input height.", "Error", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+
+        //output width and height (Fresnel-Bluestein)
+        methodIdx = methodCombo.getSelectedIndex();
+
+        if (methodIdx == 2) {
+            try {
+                outputWUser = Float.parseFloat(outputWField.getText());
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(this, "Please insert a valid output width.", "Error", JOptionPane.ERROR_MESSAGE);
+                return false;
+            }
+
+            try {
+                outputHUser = Float.parseFloat(outputHField.getText());
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(this, "Please insert a valid output height.", "Error", JOptionPane.ERROR_MESSAGE);
+                return false;
+            }
+        }
+
+        fixUnits();
+//        data.setDistance(zStep);
+
+        //sets the parameters, if methodIdx == 2 -> Fresnel-Bluestein
+        if (methodIdx == 2) {
+            data.setParameters(lambdaUm, zStepUm, inputWUm, inputHUm, outputWUm, outputHUm);
+        } else {
+            data.setParameters(lambdaUm, zStepUm, inputWUm, inputHUm);
+        }
+
+        phaseEnabled = phaseChk.isSelected();
+        amplitudeEnabled = amplitudeChk.isSelected();
+        intensityEnabled = intensityChk.isSelected();
+        realEnabled = realChk.isSelected();
+        imaginaryEnabled = imaginaryChk.isSelected();
+
+        //if there isn't at least one output image selected returns error
+        if (!phaseEnabled && !amplitudeEnabled && !intensityEnabled && !realEnabled && !imaginaryEnabled) {
+            JOptionPane.showMessageDialog(this, "Please select at least one output.", "Error", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+
+        //returns success
+        return true;
+    }
+
+    /**
+     * Propagates, prints the information on the log and shows the output
+     * images.
+     *
+     * @param useZ
+     */
+    private void propagate(boolean useZ) {
+
+        data.propagate(methodIdx, filterEnabled, isPlane, curvRadius);
+
+        String[] parameters = getFormattedParameters(useZ);
+
+        updateLog(true,
+                "\nMethod: " + PROPAGATION_METHOD[methodIdx]
+                + "\nReal input: " + parameters[0]
+                + "\nImaginary input: " + parameters[1]
+                + "\nWavelength: " + parameters[2]
+                + "\nDistance: " + parameters[3]
+                + "\nInput Width: " + parameters[4]
+                + "\nInput Height: " + parameters[5]);
+
+        if (methodIdx == 2) {
+            updateLog(false,
+                    "\nOutput Width: " + parameters[6]
+                    + "\nOutput Height: " + parameters[7]);
+        }
+
+        float[][] field = data.getOutputField();
+        if (useZ) {
+            setStepDistance();
+        }
+
+        calibrate(useZ);
+
+        if (phaseEnabled) {
+            ImageProcessor ip1 = new FloatProcessor(ArrayUtils.phase(field));
+            ImagePlus imp1 = new ImagePlus("Phase; z = " + parameters[3],
+                    phaseByteSelected ? ip1.convertToByteProcessor() : ip1);
+            imp1.setCalibration(cal);
+            imp1.show();
+        }
+
+        if (amplitudeEnabled) {
+            ImageProcessor ip2 = new FloatProcessor(ArrayUtils.modulus(field));
+            if (amplitudeLogSelected) {
+                ip2.log();
+            }
+
+            ImagePlus imp2 = new ImagePlus("Amplitude; z = " + parameters[3],
+                    amplitudeByteSelected ? ip2.convertToByteProcessor() : ip2);
+            imp2.setCalibration(cal);
+            imp2.show();
+        }
+
+        if (intensityEnabled) {
+            ImageProcessor ip3 = new FloatProcessor(ArrayUtils.modulusSq(field));
+            if (intensityLogSelected) {
+                ip3.log();
+            }
+
+            ImagePlus imp3 = new ImagePlus("Intensity; z = " + parameters[3],
+                    intensityByteSelected ? ip3.convertToByteProcessor() : ip3);
+            imp3.setCalibration(cal);
+            imp3.show();
+        }
+
+        if (realEnabled) {
+            ImageProcessor ip4 = new FloatProcessor(ArrayUtils.real(field));
+            ImagePlus imp4 = new ImagePlus("Real; z = " + parameters[3],
+                    realByteSelected ? ip4.convertToByteProcessor() : ip4);
+            imp4.setCalibration(cal);
+            imp4.show();
+        }
+
+        if (realEnabled) {
+            ImageProcessor ip5 = new FloatProcessor(ArrayUtils.imaginary(field));
+            ImagePlus imp5 = new ImagePlus("Imaginary; z = " + parameters[3],
+                    imaginaryByteSelected ? ip5.convertToByteProcessor() : ip5);
+            imp5.setCalibration(cal);
+            imp5.show();
+        }
+    }
+
+    /**
+     * Creates the calibration object for the output images.
+     *
+     * @param useZ
+     */
+    private void calibrate(boolean useZ) {
+        float dx = inputWUm / M;
+        float dy = inputHUm / N;
+
+        float dxOut = 0;
+        float dyOut = 0;
+
+        cal = new Calibration();
+
+        if (methodIdx == 0) {
+            //angular spectrum, the output field has teh same size of the input
+            dxOut = inputWUm / M;
+            dyOut = inputHUm / N;
+        } else if (methodIdx == 1) {
+            //fresnel, the output field has a modified pixel size, given by
+            //dxOut = lambda * z / (M * dx)
+            dxOut = useZ ? lambdaUm * zUm / (M * dx) : lambdaUm * zStepUm / (M * dx);
+            dyOut = useZ ? lambdaUm * zUm / (N * dy) : lambdaUm * zStepUm / (N * dy);
+
+            //sign correction when z < 0
+            dxOut *= Math.signum(useZ ? zUm : zStepUm);
+            dyOut *= Math.signum(useZ ? zUm : zStepUm);
+        } else if (methodIdx == 2) {
+            //fresnel-bluestein, the output field size is given by the user
+            dxOut = outputWUm / M;
+            dyOut = outputHUm / N;
+        } else if (methodIdx == 3) {
+            float zCrit = M * dx * dx / lambdaUm;
+            //if z < zCrit, uses angular spectrum, else fresnel
+            if (Math.abs(useZ ? zUm : zStepUm) < zCrit) {
+                dxOut = inputWUm / M;
+                dyOut = inputHUm / N;
+            } else {
+                dxOut = useZ ? lambdaUm * zUm / (M * dx) : lambdaUm * zStepUm / (M * dx);
+                dyOut = useZ ? lambdaUm * zUm / (N * dy) : lambdaUm * zStepUm / (N * dy);
+
+                dxOut *= Math.signum(useZ ? zUm : zStepUm);
+                dyOut *= Math.signum(useZ ? zUm : zStepUm);
+            }
+        }
+
+        //converts the output size, to user units
+        if (outputSizeUnits.equals("nm")) {
+            dxOut *= 1E3f;
+            dyOut *= 1E3f;
+        } else if (outputSizeUnits.equals("mm")) {
+            dxOut *= 1E-3f;
+            dyOut *= 1E-3f;
+        } else if (outputSizeUnits.equals("cm")) {
+            dxOut *= 1E-4f;
+            dyOut *= 1E-4f;
+        } else if (outputSizeUnits.equals("m")) {
+            dxOut *= 1E-6f;
+            dyOut *= 1E-6f;
+        }
+
+//        System.out.println("dx " + dx);
+//        System.out.println("dy " + dy);
+//        
+//        System.out.println("dxo " + dxOut);
+//        System.out.println("dyo " + dyOut);
+        cal.setUnit(outputSizeUnits);
+        cal.pixelWidth = dxOut;
+        cal.pixelHeight = dyOut;
+    }
+
+    /**
+     * Returns the calibration object.
+     *
+     * @return
+     */
+    public Calibration getCalibration() {
+        return cal;
+    }
+
+    /**
+     * Listener method, updates the input combos.
+     *
+     * @param imp
+     */
     @Override
     public void imageClosed(ImagePlus imp) {
-
-        int idx = inputCombo.getSelectedIndex();
-
-        getOpenedImages();
-        inputCombo.setModel(new DefaultComboBoxModel<String>(titles));
-        inputCombo.setSelectedIndex((idx >= titles.length) ? titles.length - 1 : idx);
-
-        if (filterFrame != null && filterFrame.isVisible() && imp.getID() == fftID) {
-            filterFrame.close(true);
-        }
+        updateCombos();
     }
 
+    /**
+     * Listener method, updates the input combos.
+     *
+     * @param imp
+     */
+    @Override
+    public void imageOpened(ImagePlus imp) {
+        updateCombos();
+    }
+
+    /**
+     * Listener method, updates the input combos.
+     *
+     * @param imp
+     */
     @Override
     public void imageUpdated(ImagePlus imp) {
+        updateCombos();
     }
 
-    private void removeListener() {
+    /**
+     * Updates the information on the combos.
+     */
+    private void updateCombos() {
+        int realIdx = realInputCombo.getSelectedIndex();
+        int imaginaryIdx = imaginaryInputCombo.getSelectedIndex();
+
+        getOpenedImages();
+        realInputCombo.setModel(new DefaultComboBoxModel<String>(titles));
+        realInputCombo.setSelectedIndex((realIdx >= titles.length)
+                ? titles.length - 1 : realIdx);
+
+        imaginaryInputCombo.setModel(new DefaultComboBoxModel<String>(titles));
+        imaginaryInputCombo.setSelectedIndex((imaginaryIdx >= titles.length)
+                ? titles.length - 1 : imaginaryIdx);
+    }
+
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
+     */
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
+
+        popup = new javax.swing.JPopupMenu();
+        copyItem = new javax.swing.JMenuItem();
+        copyAllItem = new javax.swing.JMenuItem();
+        sep1 = new javax.swing.JPopupMenu.Separator();
+        wrapItem = new javax.swing.JCheckBoxMenuItem();
+        sep2 = new javax.swing.JPopupMenu.Separator();
+        clearItem = new javax.swing.JMenuItem();
+        parametersPanel = new javax.swing.JPanel();
+        methodCombo = new javax.swing.JComboBox();
+        realInputCombo = new javax.swing.JComboBox();
+        imaginaryInputCombo = new javax.swing.JComboBox();
+        lambdaField = new javax.swing.JTextField();
+        zField = new javax.swing.JTextField();
+        inputWField = new javax.swing.JTextField();
+        inputHField = new javax.swing.JTextField();
+        outputWField = new javax.swing.JTextField();
+        outputHField = new javax.swing.JTextField();
+        lockBtn = new javax.swing.JToggleButton();
+        outputHLabel = new javax.swing.JLabel();
+        outputWLabel = new javax.swing.JLabel();
+        inputHLabel = new javax.swing.JLabel();
+        inputWLabel = new javax.swing.JLabel();
+        zLabel = new javax.swing.JLabel();
+        lambdaLabel = new javax.swing.JLabel();
+        imaginaryInputLabel = new javax.swing.JLabel();
+        realInputLabel = new javax.swing.JLabel();
+        methodLabel = new javax.swing.JLabel();
+        btnsPanel = new javax.swing.JPanel();
+        propagatePanel = new javax.swing.JPanel();
+        propagateBtn = new javax.swing.JButton();
+        roiChk = new javax.swing.JCheckBox();
+        settingsBtn = new javax.swing.JButton();
+        batchBtn = new javax.swing.JButton();
+        incBtn = new javax.swing.JButton();
+        stepField = new javax.swing.JTextField();
+        decBtn = new javax.swing.JButton();
+        chkPanel = new javax.swing.JPanel();
+        phaseChk = new javax.swing.JCheckBox();
+        amplitudeChk = new javax.swing.JCheckBox();
+        intensityChk = new javax.swing.JCheckBox();
+        realChk = new javax.swing.JCheckBox();
+        imaginaryChk = new javax.swing.JCheckBox();
+        logPane = new javax.swing.JScrollPane();
+        log = new javax.swing.JTextArea();
+
+        copyItem.setIcon(new javax.swing.ImageIcon(getClass().getResource("/page_white_copy.png"))); // NOI18N
+        copyItem.setText("Copy");
+        copyItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                copyItemActionPerformed(evt);
+            }
+        });
+        popup.add(copyItem);
+
+        copyAllItem.setIcon(new javax.swing.ImageIcon(getClass().getResource("/page_copy.png"))); // NOI18N
+        copyAllItem.setText("Copy All");
+        copyAllItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                copyAllItemActionPerformed(evt);
+            }
+        });
+        popup.add(copyAllItem);
+        popup.add(sep1);
+
+        wrapItem.setSelected(logWrapping);
+        wrapItem.setText("Wrap");
+        wrapItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                wrapItemActionPerformed(evt);
+            }
+        });
+        popup.add(wrapItem);
+        popup.add(sep2);
+
+        clearItem.setIcon(new javax.swing.ImageIcon(getClass().getResource("/page_delete.png"))); // NOI18N
+        clearItem.setText("Clear");
+        clearItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                clearItemActionPerformed(evt);
+            }
+        });
+        popup.add(clearItem);
+
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setTitle(TITLE);
+        setBounds(new java.awt.Rectangle(locX, locY, 0, 0)
+        );
+        setIconImage(Toolkit.getDefaultToolkit().getImage(getClass().getResource("/icon.png")));
+        setMaximumSize(new java.awt.Dimension(545, 311));
+        setMinimumSize(new java.awt.Dimension(545, 311));
+        setResizable(false);
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            public void windowClosing(java.awt.event.WindowEvent evt) {
+                formWindowClosing(evt);
+            }
+        });
+
+        parametersPanel.setBorder(javax.swing.BorderFactory.createTitledBorder("Parameters"));
+        parametersPanel.setMaximumSize(new java.awt.Dimension(255, 301));
+        parametersPanel.setMinimumSize(new java.awt.Dimension(255, 301));
+
+        methodCombo.setModel(new DefaultComboBoxModel<String>(PROPAGATION_METHOD));
+        methodCombo.setSelectedIndex(methodIdx);
+        methodCombo.setMaximumSize(new java.awt.Dimension(115, 20));
+        methodCombo.setMinimumSize(new java.awt.Dimension(115, 20));
+        methodCombo.setPreferredSize(new java.awt.Dimension(115, 20));
+        methodCombo.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                methodComboActionPerformed(evt);
+            }
+        });
+
+        realInputCombo.setModel(new DefaultComboBoxModel<String>(titles)
+        );
+        realInputCombo.setSelectedIndex(titles.length > 1 ? 1 : 0);
+        realInputCombo.setMaximumSize(new java.awt.Dimension(115, 20));
+        realInputCombo.setMinimumSize(new java.awt.Dimension(115, 20));
+        realInputCombo.setPreferredSize(new java.awt.Dimension(115, 20));
+
+        imaginaryInputCombo.setModel(new DefaultComboBoxModel<String>(titles));
+        imaginaryInputCombo.setSelectedIndex(titles.length > 2 ? 2 : 0);
+        imaginaryInputCombo.setMaximumSize(new java.awt.Dimension(115, 20));
+        imaginaryInputCombo.setMinimumSize(new java.awt.Dimension(115, 20));
+        imaginaryInputCombo.setPreferredSize(new java.awt.Dimension(115, 20));
+
+        lambdaField.setText(lambdaString);
+        lambdaField.setMaximumSize(new java.awt.Dimension(115, 20));
+        lambdaField.setMinimumSize(new java.awt.Dimension(115, 20));
+        lambdaField.setPreferredSize(new java.awt.Dimension(115, 20));
+        lambdaField.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusGained(java.awt.event.FocusEvent evt) {
+                textFieldFocusGained(evt);
+            }
+        });
+
+        zField.setText(zString);
+        zField.setMaximumSize(new java.awt.Dimension(115, 20));
+        zField.setMinimumSize(new java.awt.Dimension(115, 20));
+        zField.setPreferredSize(new java.awt.Dimension(115, 20));
+        zField.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusGained(java.awt.event.FocusEvent evt) {
+                textFieldFocusGained(evt);
+            }
+        });
+
+        inputWField.setText(inputWString);
+        inputWField.setMaximumSize(new java.awt.Dimension(115, 20));
+        inputWField.setMinimumSize(new java.awt.Dimension(115, 20));
+        inputWField.setPreferredSize(new java.awt.Dimension(115, 20));
+        inputWField.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusGained(java.awt.event.FocusEvent evt) {
+                textFieldFocusGained(evt);
+            }
+        });
+
+        inputHField.setText(inputHString);
+        inputHField.setMaximumSize(new java.awt.Dimension(115, 20));
+        inputHField.setMinimumSize(new java.awt.Dimension(115, 20));
+        inputHField.setPreferredSize(new java.awt.Dimension(115, 20));
+        inputHField.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusGained(java.awt.event.FocusEvent evt) {
+                textFieldFocusGained(evt);
+            }
+        });
+
+        outputWField.setText(outputWString);
+        outputWField.setEnabled(methodIdx == 2);
+        outputWField.setMaximumSize(new java.awt.Dimension(83, 20));
+        outputWField.setMinimumSize(new java.awt.Dimension(83, 20));
+        outputWField.setPreferredSize(new java.awt.Dimension(83, 20));
+        outputWField.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusGained(java.awt.event.FocusEvent evt) {
+                textFieldFocusGained(evt);
+            }
+        });
+        outputWField.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                outputWFieldActionPerformed(evt);
+            }
+        });
+
+        outputHField.setText(outputHString);
+        outputHField.setEnabled(methodIdx == 2);
+        outputHField.setMaximumSize(new java.awt.Dimension(83, 20));
+        outputHField.setMinimumSize(new java.awt.Dimension(83, 20));
+        outputHField.setPreferredSize(new java.awt.Dimension(83, 20));
+        outputHField.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusGained(java.awt.event.FocusEvent evt) {
+                textFieldFocusGained(evt);
+            }
+        });
+        outputHField.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                outputHFieldActionPerformed(evt);
+            }
+        });
+
+        lockBtn.setIcon(new javax.swing.ImageIcon(getClass().getResource(relationLock ? "/lock.png" : "/lock_open.png")));
+        lockBtn.setEnabled(methodIdx == 2);
+        lockBtn.setMaximumSize(new java.awt.Dimension(25, 25));
+        lockBtn.setMinimumSize(new java.awt.Dimension(25, 25));
+        lockBtn.setPreferredSize(new java.awt.Dimension(25, 25));
+        lockBtn.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                lockBtnActionPerformed(evt);
+            }
+        });
+
+        outputHLabel.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
+        outputHLabel.setText("Output height [" + outputSizeUnits + "]:");
+        outputHLabel.setMaximumSize(new java.awt.Dimension(100, 14));
+        outputHLabel.setMinimumSize(new java.awt.Dimension(100, 14));
+        outputHLabel.setPreferredSize(new java.awt.Dimension(100, 14));
+
+        outputWLabel.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
+        outputWLabel.setText("Output width [" + outputSizeUnits + "]:");
+        outputWLabel.setMaximumSize(new java.awt.Dimension(100, 14));
+        outputWLabel.setMinimumSize(new java.awt.Dimension(100, 14));
+        outputWLabel.setPreferredSize(new java.awt.Dimension(100, 14));
+
+        inputHLabel.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
+        inputHLabel.setText("Input height [" + inputSizeUnits + "]:");
+        inputHLabel.setMaximumSize(new java.awt.Dimension(100, 14));
+        inputHLabel.setMinimumSize(new java.awt.Dimension(100, 14));
+        inputHLabel.setPreferredSize(new java.awt.Dimension(100, 14));
+
+        inputWLabel.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
+        inputWLabel.setText("Input width [" + inputSizeUnits + "]:");
+        inputWLabel.setMaximumSize(new java.awt.Dimension(100, 14));
+        inputWLabel.setMinimumSize(new java.awt.Dimension(100, 14));
+        inputWLabel.setPreferredSize(new java.awt.Dimension(100, 14));
+
+        zLabel.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
+        zLabel.setText("Distance ["+zUnits+"]:");
+        zLabel.setMaximumSize(new java.awt.Dimension(100, 14));
+        zLabel.setMinimumSize(new java.awt.Dimension(100, 14));
+        zLabel.setPreferredSize(new java.awt.Dimension(100, 14));
+
+        lambdaLabel.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
+        lambdaLabel.setText("Wavelength ["+lambdaUnits+"]:");
+        lambdaLabel.setMaximumSize(new java.awt.Dimension(100, 14));
+        lambdaLabel.setMinimumSize(new java.awt.Dimension(100, 14));
+        lambdaLabel.setPreferredSize(new java.awt.Dimension(100, 14));
+
+        imaginaryInputLabel.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
+        imaginaryInputLabel.setText("Imaginary input:");
+        imaginaryInputLabel.setMaximumSize(new java.awt.Dimension(100, 14));
+        imaginaryInputLabel.setMinimumSize(new java.awt.Dimension(100, 14));
+        imaginaryInputLabel.setPreferredSize(new java.awt.Dimension(100, 14));
+
+        realInputLabel.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
+        realInputLabel.setText("Real input:");
+        realInputLabel.setMaximumSize(new java.awt.Dimension(100, 14));
+        realInputLabel.setMinimumSize(new java.awt.Dimension(100, 14));
+        realInputLabel.setPreferredSize(new java.awt.Dimension(100, 14));
+
+        methodLabel.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
+        methodLabel.setText("Method:");
+        methodLabel.setMaximumSize(new java.awt.Dimension(100, 14));
+        methodLabel.setMinimumSize(new java.awt.Dimension(100, 14));
+        methodLabel.setPreferredSize(new java.awt.Dimension(100, 14));
+
+        javax.swing.GroupLayout parametersPanelLayout = new javax.swing.GroupLayout(parametersPanel);
+        parametersPanel.setLayout(parametersPanelLayout);
+        parametersPanelLayout.setHorizontalGroup(
+            parametersPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, parametersPanelLayout.createSequentialGroup()
+                .addGap(5, 5, 5)
+                .addGroup(parametersPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(outputHLabel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(outputWLabel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(inputHLabel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(inputWLabel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(zLabel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(lambdaLabel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(imaginaryInputLabel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(realInputLabel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(methodLabel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(18, 18, 18)
+                .addGroup(parametersPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(methodCombo, 0, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(realInputCombo, 0, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(imaginaryInputCombo, 0, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(lambdaField, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(zField, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(inputWField, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(inputHField, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(parametersPanelLayout.createSequentialGroup()
+                        .addGroup(parametersPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(outputHField, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(outputWField, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(lockBtn, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addGap(5, 5, 5))
+        );
+        parametersPanelLayout.setVerticalGroup(
+            parametersPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(parametersPanelLayout.createSequentialGroup()
+                .addGap(5, 5, 5)
+                .addGroup(parametersPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(methodCombo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(methodLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(parametersPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(realInputCombo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(realInputLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(parametersPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(imaginaryInputCombo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(imaginaryInputLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(parametersPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lambdaField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(lambdaLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(parametersPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(zField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(zLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(parametersPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(inputWField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(inputWLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(parametersPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(inputHField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(inputHLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(parametersPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(parametersPanelLayout.createSequentialGroup()
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(parametersPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(outputWLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(outputWField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(parametersPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(outputHLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(outputHField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addGroup(parametersPanelLayout.createSequentialGroup()
+                        .addGap(24, 24, 24)
+                        .addComponent(lockBtn, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addGap(5, 5, 5))
+        );
+
+        btnsPanel.setMaximumSize(new java.awt.Dimension(270, 66));
+        btnsPanel.setMinimumSize(new java.awt.Dimension(270, 66));
+
+        propagatePanel.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        propagatePanel.setMaximumSize(new java.awt.Dimension(173, 32));
+        propagatePanel.setMinimumSize(new java.awt.Dimension(173, 32));
+
+        propagateBtn.setText("Propagate");
+        propagateBtn.setMaximumSize(new java.awt.Dimension(90, 23));
+        propagateBtn.setMinimumSize(new java.awt.Dimension(90, 23));
+        propagateBtn.setPreferredSize(new java.awt.Dimension(90, 23));
+        propagateBtn.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                propagateBtnActionPerformed(evt);
+            }
+        });
+
+        roiChk.setSelected(roiEnabled);
+        roiChk.setText("Same ROI");
+        roiChk.setEnabled(false);
+
+        javax.swing.GroupLayout propagatePanelLayout = new javax.swing.GroupLayout(propagatePanel);
+        propagatePanel.setLayout(propagatePanelLayout);
+        propagatePanelLayout.setHorizontalGroup(
+            propagatePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(propagatePanelLayout.createSequentialGroup()
+                .addGap(2, 2, 2)
+                .addComponent(propagateBtn, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(roiChk)
+                .addGap(2, 2, 2))
+        );
+        propagatePanelLayout.setVerticalGroup(
+            propagatePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(propagatePanelLayout.createSequentialGroup()
+                .addGap(2, 2, 2)
+                .addGroup(propagatePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(propagateBtn, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(roiChk))
+                .addGap(2, 2, 2))
+        );
+
+        settingsBtn.setIcon(new javax.swing.ImageIcon(getClass().getResource("/wrench.png"))); // NOI18N
+        settingsBtn.setText("Settings");
+        settingsBtn.setMaximumSize(new java.awt.Dimension(91, 23));
+        settingsBtn.setMinimumSize(new java.awt.Dimension(91, 23));
+        settingsBtn.setPreferredSize(new java.awt.Dimension(91, 23));
+        settingsBtn.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                settingsBtnActionPerformed(evt);
+            }
+        });
+
+        batchBtn.setText("Batch");
+        batchBtn.setEnabled(false);
+        batchBtn.setMaximumSize(new java.awt.Dimension(91, 23));
+        batchBtn.setMinimumSize(new java.awt.Dimension(91, 23));
+        batchBtn.setPreferredSize(new java.awt.Dimension(91, 23));
+        batchBtn.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                batchBtnActionPerformed(evt);
+            }
+        });
+
+        incBtn.setText("+");
+        incBtn.setEnabled(false);
+        incBtn.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                incBtnActionPerformed(evt);
+            }
+        });
+
+        stepField.setText(stepString);
+        stepField.setEnabled(false);
+        stepField.setMaximumSize(new java.awt.Dimension(79, 20));
+        stepField.setMinimumSize(new java.awt.Dimension(79, 20));
+        stepField.setPreferredSize(new java.awt.Dimension(79, 20));
+        stepField.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusGained(java.awt.event.FocusEvent evt) {
+                textFieldFocusGained(evt);
+            }
+        });
+
+        decBtn.setText("-");
+        decBtn.setEnabled(false);
+        decBtn.setMaximumSize(new java.awt.Dimension(41, 23));
+        decBtn.setMinimumSize(new java.awt.Dimension(41, 23));
+        decBtn.setPreferredSize(new java.awt.Dimension(41, 23));
+        decBtn.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                decBtnActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout btnsPanelLayout = new javax.swing.GroupLayout(btnsPanel);
+        btnsPanel.setLayout(btnsPanelLayout);
+        btnsPanelLayout.setHorizontalGroup(
+            btnsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(btnsPanelLayout.createSequentialGroup()
+                .addGap(0, 0, 0)
+                .addGroup(btnsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addGroup(btnsPanelLayout.createSequentialGroup()
+                        .addComponent(decBtn, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(stepField, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(incBtn))
+                    .addComponent(propagatePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(btnsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(settingsBtn, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(batchBtn, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(0, 0, 0))
+        );
+        btnsPanelLayout.setVerticalGroup(
+            btnsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(btnsPanelLayout.createSequentialGroup()
+                .addGap(0, 0, 0)
+                .addGroup(btnsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
+                    .addComponent(propagatePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(settingsBtn, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(btnsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(decBtn, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(stepField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(incBtn)
+                    .addComponent(batchBtn, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(5, 5, 5))
+        );
+
+        chkPanel.setMaximumSize(new java.awt.Dimension(269, 23));
+        chkPanel.setMinimumSize(new java.awt.Dimension(269, 23));
+
+        phaseChk.setSelected(phaseEnabled);
+        phaseChk.setText("Phase");
+
+        amplitudeChk.setSelected(amplitudeEnabled);
+        amplitudeChk.setText("Amp.");
+        amplitudeChk.setToolTipText("Amplitude");
+
+        intensityChk.setSelected(intensityEnabled);
+        intensityChk.setText("Int.");
+        intensityChk.setToolTipText("Intensity");
+
+        realChk.setSelected(realEnabled);
+        realChk.setText("Real");
+
+        imaginaryChk.setSelected(imaginaryEnabled);
+        imaginaryChk.setText("Imaginary");
+
+        javax.swing.GroupLayout chkPanelLayout = new javax.swing.GroupLayout(chkPanel);
+        chkPanel.setLayout(chkPanelLayout);
+        chkPanelLayout.setHorizontalGroup(
+            chkPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(chkPanelLayout.createSequentialGroup()
+                .addGap(0, 0, 0)
+                .addComponent(phaseChk)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(amplitudeChk)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(intensityChk)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(realChk)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(imaginaryChk)
+                .addGap(0, 0, 0))
+        );
+        chkPanelLayout.setVerticalGroup(
+            chkPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(chkPanelLayout.createSequentialGroup()
+                .addGap(0, 0, 0)
+                .addGroup(chkPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(phaseChk)
+                    .addComponent(amplitudeChk)
+                    .addComponent(intensityChk)
+                    .addComponent(realChk)
+                    .addComponent(imaginaryChk))
+                .addGap(0, 0, 0))
+        );
+
+        logPane.setAutoscrolls(true);
+        logPane.setMaximumSize(new java.awt.Dimension(274, 196));
+        logPane.setMinimumSize(new java.awt.Dimension(274, 196));
+        logPane.setPreferredSize(new java.awt.Dimension(274, 196));
+
+        log.setEditable(false);
+        log.setColumns(20);
+        log.setLineWrap(logWrapping);
+        log.setRows(5);
+        log.setText(LOG_HEADER);
+        log.setWrapStyleWord(true);
+        log.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                logMousePressed(evt);
+            }
+            public void mouseReleased(java.awt.event.MouseEvent evt) {
+                logMouseReleased(evt);
+            }
+        });
+        logPane.setViewportView(log);
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
+        getContentPane().setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addGap(5, 5, 5)
+                .addComponent(parametersPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
+                    .addComponent(btnsPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(chkPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(logPane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(5, 5, 5))
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addGap(5, 5, 5)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(logPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGap(8, 8, 8)
+                        .addComponent(chkPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(8, 8, 8)
+                        .addComponent(btnsPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(parametersPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(5, 5, 5))
+        );
+
+        pack();
+    }// </editor-fold>//GEN-END:initComponents
+
+    private void propagateBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_propagateBtnActionPerformed
+        if (filterFrame != null && filterFrame.isVisible()) {
+            filterFrame.setState(Frame.NORMAL);
+            filterFrame.toFront();
+            return;
+        }
+
+        int realIdx = realInputCombo.getSelectedIndex();
+        int imaginaryIdx = imaginaryInputCombo.getSelectedIndex();
+
+        boolean success = setInputImages(realIdx, imaginaryIdx);
+        if (!success) {
+            return;
+        }
+
+        success = setParameters();
+        if (!success) {
+            return;
+        }
+
+        if (!filterEnabled) {
+            propagate(true);
+            enableAfterPropagationOpt(true);
+
+            return;
+        }
+
+        boolean differentDimensions = oldMReal != newMReal || oldNReal != newNReal
+                || oldMImaginary != newMImaginary || oldNImaginary != newNImaginary;
+        boolean differentIDs = oldIDReal != newIDReal || oldIDImaginary != newIDImaginary;
+
+        if (roiChk.isEnabled() && roiChk.isSelected() && !differentDimensions) {
+            if (differentIDs) {
+                data.calculateFFT();
+                data.center();
+            }
+
+            propagate(true);
+            setImageProps();
+
+            return;
+        }
+
+        pref.putBoolean(PHASE_CHECKED, phaseEnabled);
+        pref.putBoolean(AMPLITUDE_CHECKED, amplitudeEnabled);
+        pref.putBoolean(INTENSITY_CHECKED, intensityEnabled);
+        pref.putBoolean(REAL_CHECKED, realEnabled);
+        pref.putBoolean(IMAGINARY_CHECKED, imaginaryEnabled);
+
+        calibrate(true);
+
+        if (filterFrame == null || !filterFrame.isDisplayable()) {
+            filterFrame = new FilterFrame(this, methodIdx);
+        }
+    }//GEN-LAST:event_propagateBtnActionPerformed
+
+    private void settingsBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_settingsBtnActionPerformed
+        if (settingsFrame == null || !settingsFrame.isDisplayable()) {
+            settingsFrame = new SettingsFrame(this);
+            settingsFrame.setVisible(true);
+        } else {
+            settingsFrame.setState(Frame.NORMAL);
+            settingsFrame.toFront();
+        }
+    }//GEN-LAST:event_settingsBtnActionPerformed
+
+    private void decBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_decBtnActionPerformed
+        boolean success = setParameters(false);
+        if (!success) {
+            return;
+        }
+
+        propagate(false);
+    }//GEN-LAST:event_decBtnActionPerformed
+
+    private void incBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_incBtnActionPerformed
+        boolean success = setParameters(true);
+        if (!success) {
+            return;
+        }
+
+        propagate(false);
+    }//GEN-LAST:event_incBtnActionPerformed
+
+    private void batchBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_batchBtnActionPerformed
+        if (batchFrame != null && batchFrame.isVisible()) {
+            batchFrame.setState(Frame.NORMAL);
+            batchFrame.toFront();
+            return;
+        }
+
+        setParameters();
+
+        pref.putBoolean(PHASE_CHECKED, phaseEnabled);
+        pref.putBoolean(AMPLITUDE_CHECKED, amplitudeEnabled);
+        pref.putBoolean(INTENSITY_CHECKED, intensityEnabled);
+        pref.putBoolean(REAL_CHECKED, realEnabled);
+        pref.putBoolean(IMAGINARY_CHECKED, imaginaryEnabled);
+
+        calibrate(true);
+
+        if (batchFrame == null || !batchFrame.isDisplayable()) {
+            batchFrame = new BatchFrame(this, methodIdx);
+            batchFrame.setVisible(true);
+        }
+    }//GEN-LAST:event_batchBtnActionPerformed
+
+    private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
+        if (filterFrame != null && filterFrame.isVisible()) {
+            filterFrame.close(false);
+        }
+
+        if (settingsFrame != null && settingsFrame.isVisible()) {
+            settingsFrame.setVisible(false);
+            settingsFrame.dispose();
+        }
+
+        if (batchFrame != null && batchFrame.isVisible()) {
+            batchFrame.setVisible(false);
+            batchFrame.dispose();
+        }
+
+        savePrefs();
         ImagePlus.removeImageListener(this);
-    }
+        setVisible(false);
+        dispose();
+    }//GEN-LAST:event_formWindowClosing
 
-    private class ButtonListener implements ActionListener {
+    private void methodComboActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_methodComboActionPerformed
+        outputWField.setEnabled(methodCombo.getSelectedIndex() == 2);
+        outputHField.setEnabled(methodCombo.getSelectedIndex() == 2);
+        lockBtn.setEnabled(methodCombo.getSelectedIndex() == 2);
+    }//GEN-LAST:event_methodComboActionPerformed
 
-        @Override
-        public void actionPerformed(ActionEvent e) {
+    private void lockBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_lockBtnActionPerformed
+        relationLock = lockBtn.isSelected();
+        lockBtn.setIcon(new ImageIcon(getClass().getResource(relationLock
+                ? "/lock.png" : "/lock_open.png")));
+    }//GEN-LAST:event_lockBtnActionPerformed
 
-            JButton source = (JButton) e.getSource();
-//            try {
-            if (source == propagateBtn) {
-                propagate();
-            } else if (source == settingsBtn) {
-                settings();
-            } else if (source == incBtn) {
-                increaseOrDecrease(true);
-            } else if (source == decBtn) {
-                increaseOrDecrease(false);
-            } else if (source == batchBtn) {
-                batch();
+    private void outputWFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_outputWFieldActionPerformed
+        if (!relationLock) {
+            return;
+        }
+
+        float ratio, inW, inH, outW, outH;
+
+        try {
+            inW = Float.parseFloat(inputWField.getText());
+            inH = Float.parseFloat(inputHField.getText());
+
+            if (inW == 0 || inH == 0) {
+                return;
             }
-//                else if (source == clearBtn){
-//                    clear();
-//                }
-//            } catch (OutOfMemoryError exc) {
-//                IJ.error("Out of memory.");
-//            }
+            ratio = inW / inH;
 
-        }
-    }
-
-    private class PopupListener extends MouseAdapter {
-
-        JPopupMenu popup;
-
-        PopupListener(JPopupMenu popupMenu) {
-            popup = popupMenu;
-        }
-
-        @Override
-        public void mousePressed(MouseEvent e) {
-            maybeShowPopup(e);
-        }
-
-        @Override
-        public void mouseReleased(MouseEvent e) {
-            maybeShowPopup(e);
-
-//            logSelection = log.getSelectedText();
-        }
-
-        private void maybeShowPopup(MouseEvent e) {
-            if (e.isPopupTrigger()) {
-                popup.show(e.getComponent(),
-                        e.getX(), e.getY());
+            outW = Float.parseFloat(outputWField.getText());
+            if (outW == 0) {
+                return;
             }
+            outH = outW / ratio;
+            outputHField.setText("" + outH);
+        } catch (NumberFormatException exc) {
+
         }
-    }
+    }//GEN-LAST:event_outputWFieldActionPerformed
 
-    private class ItemListener implements ActionListener {
+    private void outputHFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_outputHFieldActionPerformed
+        if (!relationLock) {
+            return;
+        }
 
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            JMenuItem source = (JMenuItem) e.getSource();
+        float ratio, inW, inH, outW, outH;
 
-//            try {
-            if (source == copyItem) {
+        try {
+            inW = Float.parseFloat(inputWField.getText());
+            inH = Float.parseFloat(inputHField.getText());
 
-                String s = log.getSelectedText();
-
-                StringSelection stringSelection = new StringSelection(s);
-                Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-                clipboard.setContents(stringSelection, null);
-
-            } else if (source == copyAllItem) {
-
-                String s = log.getText();
-
-                StringSelection stringSelection = new StringSelection((s != null) ? s : "");
-                Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-                clipboard.setContents(stringSelection, null);
-
-            } else if (source == clearItem) {
-                log.setText(LOG_HEADER);
+            if (inW == 0 || inH == 0) {
+                return;
             }
-//            } catch (OutOfMemoryError exc) {
-//                IJ.error("Out of memory.");
-//            }
-        }
+            ratio = inW / inH;
 
-    }
+            outH = Float.parseFloat(outputHField.getText());
+            if (outH == 0) {
+                return;
+            }
+            outW = outH * ratio;
+            outputWField.setText("" + outW);
+        } catch (NumberFormatException exc) {
+
+        }
+    }//GEN-LAST:event_outputHFieldActionPerformed
+
+    private void logMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_logMousePressed
+        if (evt.isPopupTrigger()) {
+            popup.show(evt.getComponent(), evt.getX(), evt.getY());
+        }
+    }//GEN-LAST:event_logMousePressed
+
+    private void logMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_logMouseReleased
+        if (evt.isPopupTrigger()) {
+            popup.show(evt.getComponent(), evt.getX(), evt.getY());
+        }
+    }//GEN-LAST:event_logMouseReleased
+
+    private void copyItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_copyItemActionPerformed
+        String s = log.getSelectedText();
+
+        StringSelection stringSelection = new StringSelection(s);
+        Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+        clipboard.setContents(stringSelection, null);
+    }//GEN-LAST:event_copyItemActionPerformed
+
+    private void copyAllItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_copyAllItemActionPerformed
+        String s = log.getText();
+
+        StringSelection stringSelection = new StringSelection((s != null) ? s : "");
+        Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+        clipboard.setContents(stringSelection, null);
+    }//GEN-LAST:event_copyAllItemActionPerformed
+
+    private void wrapItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_wrapItemActionPerformed
+        log.setLineWrap(wrapItem.isSelected());
+    }//GEN-LAST:event_wrapItemActionPerformed
+
+    private void clearItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clearItemActionPerformed
+        log.setText(LOG_HEADER);
+    }//GEN-LAST:event_clearItemActionPerformed
+
+    private void textFieldFocusGained(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_textFieldFocusGained
+        JTextField field = (JTextField) evt.getComponent();
+        field.selectAll();
+    }//GEN-LAST:event_textFieldFocusGained
+
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JCheckBox amplitudeChk;
+    private javax.swing.JButton batchBtn;
+    private javax.swing.JPanel btnsPanel;
+    private javax.swing.JPanel chkPanel;
+    private javax.swing.JMenuItem clearItem;
+    private javax.swing.JMenuItem copyAllItem;
+    private javax.swing.JMenuItem copyItem;
+    private javax.swing.JButton decBtn;
+    private javax.swing.JCheckBox imaginaryChk;
+    private javax.swing.JComboBox imaginaryInputCombo;
+    private javax.swing.JLabel imaginaryInputLabel;
+    private javax.swing.JButton incBtn;
+    private javax.swing.JTextField inputHField;
+    private javax.swing.JLabel inputHLabel;
+    private javax.swing.JTextField inputWField;
+    private javax.swing.JLabel inputWLabel;
+    private javax.swing.JCheckBox intensityChk;
+    private javax.swing.JTextField lambdaField;
+    private javax.swing.JLabel lambdaLabel;
+    private javax.swing.JToggleButton lockBtn;
+    private javax.swing.JTextArea log;
+    private javax.swing.JScrollPane logPane;
+    private javax.swing.JComboBox methodCombo;
+    private javax.swing.JLabel methodLabel;
+    private javax.swing.JTextField outputHField;
+    private javax.swing.JLabel outputHLabel;
+    private javax.swing.JTextField outputWField;
+    private javax.swing.JLabel outputWLabel;
+    private javax.swing.JPanel parametersPanel;
+    private javax.swing.JCheckBox phaseChk;
+    private javax.swing.JPopupMenu popup;
+    private javax.swing.JButton propagateBtn;
+    private javax.swing.JPanel propagatePanel;
+    private javax.swing.JCheckBox realChk;
+    private javax.swing.JComboBox realInputCombo;
+    private javax.swing.JLabel realInputLabel;
+    private javax.swing.JCheckBox roiChk;
+    private javax.swing.JPopupMenu.Separator sep1;
+    private javax.swing.JPopupMenu.Separator sep2;
+    private javax.swing.JButton settingsBtn;
+    private javax.swing.JTextField stepField;
+    private javax.swing.JCheckBoxMenuItem wrapItem;
+    private javax.swing.JTextField zField;
+    private javax.swing.JLabel zLabel;
+    // End of variables declaration//GEN-END:variables
 }

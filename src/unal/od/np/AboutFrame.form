@@ -103,7 +103,7 @@
     </Component>
     <Component class="javax.swing.JLabel" name="versionLabel">
       <Properties>
-        <Property name="text" type="java.lang.String" value="Version 1.0, February 2015"/>
+        <Property name="text" type="java.lang.String" value="Version 1.1, March 2015"/>
       </Properties>
     </Component>
     <Component class="javax.swing.JLabel" name="devsLabel">

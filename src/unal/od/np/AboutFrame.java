@@ -19,14 +19,14 @@ import java.awt.Toolkit;
 
 /**
  *
- * @author: Raul Castañeda (racastanedaq@unal.edu.co)
- * @author: Pablo Piedrahita-Quintero (jppiedrahitaq@unal.edu.co)
+ * @author Raul Castañeda (racastanedaq@unal.edu.co)
+ * @author Pablo Piedrahita-Quintero (jppiedrahitaq@unal.edu.co)
  * @author Jorge Garcia-Sucerquia (jigarcia@unal.edu.co)
  */
 public class AboutFrame extends javax.swing.JFrame {
 
     /**
-     * Creates new form AboutFrame
+     * Creates new form NewJFrame
      */
     public AboutFrame() {
         initComponents();
@@ -63,7 +63,7 @@ public class AboutFrame extends javax.swing.JFrame {
         titleLabel.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
         titleLabel.setText("Numerical Propagation PlugIn");
 
-        versionLabel.setText("Version 1.0, February 2015");
+        versionLabel.setText("Version 1.1, March 2015");
 
         devsLabel.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
         devsLabel.setText("Developed by:");
