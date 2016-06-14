@@ -199,7 +199,9 @@ public class Data {
 
         int M2 = M / 2;
         int N2 = N / 2;
-        float f = 1 / (2 * curvRadius);
+        float k = 2 * (float) Math.PI / lambda;
+        float f = k / (2 * curvRadius);
+        float z2 = curvRadius * curvRadius;
 
         for (int i = 0; i < M; i++) {
             int i2 = i - M2 + 1;
@@ -210,8 +212,10 @@ public class Data {
                 float b = (dy * dy * j2 * j2);
                 float phase = f * (a + b);
 
-                sphericalWave[i][2 * j] = (float) Math.cos(phase);
-                sphericalWave[i][2 * j + 1] = (float) Math.sin(phase);
+                float r = (float) Math.sqrt(z2 + a + b);
+
+                sphericalWave[i][2 * j] = (float) Math.cos(phase) / r;
+                sphericalWave[i][2 * j + 1] = (float) Math.sin(phase) / r;
             }
         }
     }

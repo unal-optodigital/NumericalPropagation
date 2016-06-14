@@ -93,6 +93,25 @@ public interface PreferencesKeys {
 
     final static String IS_STEP = "isStep";
     final static String MAX_PLANES = "maxPlanes";
+    
+    //utilities frame
+    final static String PLANE_M = "planeM";
+    final static String PLANE_N = "planeN";
+    final static String PLANE_WIDTH = "planeWidth";
+    final static String PLANE_HEIGHT = "planeHeight";
+    final static String PLANE_WAVELENGTH = "planeWavelength";
+    final static String PLANE_DISTANCE = "planeZ";
+    final static String PLANE_A = "planeA";
+    final static String PLANE_B = "planeB";
+    final static String PLANE_C = "planeC";
+    
+    final static String SPHERICAL_M = "sphericalM";
+    final static String SPHERICAL_N = "sphericalN";
+    final static String SPHERICAL_WIDTH = "sphericalWidth";
+    final static String SPHERICAL_HEIGHT = "sphericalHeight";
+    final static String SPHERICAL_WAVELENGTH = "sphericalWavelength";
+    final static String SPHERICAL_DISTANCE = "sphericalZ";
+    final static String SPHERICAL_CURV_RADIUS = "sphericalCurvRadius";
 
     //dialogs
     final static String SHOW_FREQUENCIES_DIALOG = "showFreqDialog";

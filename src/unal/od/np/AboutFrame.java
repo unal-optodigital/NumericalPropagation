@@ -51,6 +51,8 @@ public class AboutFrame extends javax.swing.JFrame {
         groupLabel = new javax.swing.JLabel();
         univLabel = new javax.swing.JLabel();
         closeBtn = new javax.swing.JButton();
+        devsLabel1 = new javax.swing.JLabel();
+        raulLabel1 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("About Numerical Propagation");
@@ -63,7 +65,7 @@ public class AboutFrame extends javax.swing.JFrame {
         titleLabel.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
         titleLabel.setText("Numerical Propagation PlugIn");
 
-        versionLabel.setText("Version 1.1, March 2015");
+        versionLabel.setText("Version 1.2, August 2015");
 
         devsLabel.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
         devsLabel.setText("Developed by:");
@@ -85,20 +87,27 @@ public class AboutFrame extends javax.swing.JFrame {
             }
         });
 
+        devsLabel1.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
+        devsLabel1.setText("License pending");
+
+        raulLabel1.setText("Use approved for the XXVI CNF");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(closeBtn)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(logoLabel)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(logoLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(versionLabel)
+                    .addComponent(titleLabel)
+                    .addComponent(devsLabel1)
+                    .addComponent(raulLabel1)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                        .addComponent(closeBtn)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(versionLabel)
-                            .addComponent(titleLabel)
                             .addComponent(devsLabel)
                             .addComponent(raulLabel)
                             .addComponent(pabloLabel)
@@ -111,11 +120,15 @@ public class AboutFrame extends javax.swing.JFrame {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(titleLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(versionLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(devsLabel1)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(raulLabel1)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(devsLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -127,11 +140,11 @@ public class AboutFrame extends javax.swing.JFrame {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(groupLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(univLabel))
-                    .addComponent(logoLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(closeBtn)
-                .addContainerGap())
+                        .addComponent(univLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(closeBtn))
+                    .addComponent(logoLabel))
+                .addGap(11, 11, 11))
         );
 
         pack();
@@ -148,11 +161,13 @@ public class AboutFrame extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton closeBtn;
     private javax.swing.JLabel devsLabel;
+    private javax.swing.JLabel devsLabel1;
     private javax.swing.JLabel groupLabel;
     private javax.swing.JLabel jorgeLabel;
     private javax.swing.JLabel logoLabel;
     private javax.swing.JLabel pabloLabel;
     private javax.swing.JLabel raulLabel;
+    private javax.swing.JLabel raulLabel1;
     private javax.swing.JLabel titleLabel;
     private javax.swing.JLabel univLabel;
     private javax.swing.JLabel versionLabel;

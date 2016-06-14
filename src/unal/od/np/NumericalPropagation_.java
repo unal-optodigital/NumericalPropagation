@@ -16,9 +16,12 @@
 package unal.od.np;
 
 import ij.IJ;
+import ij.ImageJ;
 import ij.plugin.PlugIn;
+import java.io.File;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
+import unal.od.jdiffraction.cpu.utils.ArrayUtils;
 
 /**
  *
@@ -30,8 +33,10 @@ public class NumericalPropagation_ implements PlugIn {
 
     private static MainFrame MAIN_FRAME;
     private static UtilitiesFrame UTILITIES_FRAME;
+    private static final String IMAGEJ_VERSION = "1.48s";
+    private static final String JDIFFRACTION_VERSION = "1.2";
 
-    private static final String about = "DH_OD v1.0\n"
+    private static final String about = "NumericalPropagation v1.2\n"
             + "Raul Andrés Castañeda Quintero\n"
             + "Pablo Piedrahita-Quintero\n"
             + "Jorge Garcia-Sucerquia\n"
@@ -44,7 +49,7 @@ public class NumericalPropagation_ implements PlugIn {
     @Override
     public void run(String arg) {
 
-        if (IJ.versionLessThan("1.48s")) {
+        if (IJ.versionLessThan(IMAGEJ_VERSION)) {
             return;
         }
 
@@ -55,6 +60,17 @@ public class NumericalPropagation_ implements PlugIn {
         } catch (IllegalAccessException e) {
         } catch (UnsupportedLookAndFeelException e) {
         }
+        
+        if (arg.equalsIgnoreCase("about")) {
+            showAbout();
+            return;
+        }
+        
+        if (!ArrayUtils.jDiffractionVersion().equals(JDIFFRACTION_VERSION)){
+            IJ.error("Please update JDiffraction to the latest version.\n"
+                    + "http://unal-optodigital.github.io/JDiffraction/");
+            return;
+        }
 
         if (arg.equalsIgnoreCase("utilities")) {
             if (UTILITIES_FRAME == null || !UTILITIES_FRAME.isDisplayable()) {
@@ -64,11 +80,6 @@ public class NumericalPropagation_ implements PlugIn {
                 UTILITIES_FRAME.setVisible(true);
                 UTILITIES_FRAME.toFront();
             }
-            return;
-        }
-
-        if (arg.equalsIgnoreCase("about")) {
-            showAbout();
             return;
         }
 
@@ -85,16 +96,16 @@ public class NumericalPropagation_ implements PlugIn {
         new AboutFrame().setVisible(true);
     }
 
-//    public static void main(String... args) {
-//        new ImageJ();
-//
-//        String rute = "holo.bmp";
-//        File f = new File(rute);
-////        System.out.println(f.getAbsolutePath());
-//        IJ.open(f.getAbsolutePath());
-//
-//        new NumericalPropagation_().run("");
-//        new NumericalPropagation_().run("about");
-//        new NumericalPropagation_().run("utilities");
-//    }
+    public static void main(String... args) {
+        new ImageJ();
+
+        String rute = "holo.bmp";
+        File f = new File(rute);
+//        System.out.println(f.getAbsolutePath());
+        IJ.open(f.getAbsolutePath());
+
+        new NumericalPropagation_().run("");
+        new NumericalPropagation_().run("about");
+        new NumericalPropagation_().run("utilities");
+    }
 }

@@ -65,8 +65,8 @@ public class FilterFrame extends javax.swing.JFrame implements ImageListener, Pr
     private boolean phaseByteSelected;
     private boolean amplitudeByteSelected;
     private boolean intensityByteSelected;
-    private boolean realByteSelected;
-    private boolean imaginaryByteSelected;
+//    private boolean realByteSelected;
+//    private boolean imaginaryByteSelected;
     // </editor-fold>
 
     private final Preferences pref;
@@ -170,13 +170,13 @@ public class FilterFrame extends javax.swing.JFrame implements ImageListener, Pr
         phaseByteSelected = pref.getBoolean(PHASE_8_BIT, true);
         amplitudeByteSelected = pref.getBoolean(AMPLITUDE_8_BIT, true);
         intensityByteSelected = pref.getBoolean(INTENSITY_8_BIT, true);
-        realByteSelected = pref.getBoolean(REAL_8_BIT, true);
-        imaginaryByteSelected = pref.getBoolean(IMAGINARY_8_BIT, true);
+//        realByteSelected = pref.getBoolean(REAL_8_BIT, true);
+//        imaginaryByteSelected = pref.getBoolean(IMAGINARY_8_BIT, true);
     }
 
     public void close(boolean showDialog) {
         ImagePlus.removeImageListener(this);
-        
+
         imp.hide();
         setVisible(false);
         if (showDialog) {
@@ -185,7 +185,7 @@ public class FilterFrame extends javax.swing.JFrame implements ImageListener, Pr
         }
         dispose();
     }
-    
+
     @Override
     public void imageClosed(ImagePlus imp) {
         if (imp.getID() == fftID) {
@@ -498,21 +498,31 @@ public class FilterFrame extends javax.swing.JFrame implements ImageListener, Pr
 
         Calibration cal = parent.getCalibration();
 
+        String names = "; Re: " + parameters[0] + "; Im: " + parameters[1];
+
+        float[][] amplitude = null;
+        float max = Float.MIN_VALUE;
+
+        if (realEnabled || imaginaryEnabled) {
+            amplitude = ArrayUtils.modulus(field);
+            max = ArrayUtils.max(amplitude);
+        }
+
         if (phaseEnabled) {
             ImageProcessor ip1 = new FloatProcessor(ArrayUtils.phase(field));
-            ImagePlus imp1 = new ImagePlus("Phase; z = " + parameters[3],
+            ImagePlus imp1 = new ImagePlus("Phase; z = " + parameters[3] + names,
                     phaseByteSelected ? ip1.convertToByteProcessor() : ip1);
             imp1.setCalibration(cal);
             imp1.show();
         }
 
         if (amplitudeEnabled) {
-            ImageProcessor ip2 = new FloatProcessor(ArrayUtils.modulus(field));
+            ImageProcessor ip2 = new FloatProcessor(realEnabled || imaginaryEnabled ? amplitude : ArrayUtils.modulus(field));
             if (amplitudeLogSelected) {
                 ip2.log();
             }
 
-            ImagePlus imp2 = new ImagePlus("Amplitude; z = " + parameters[3],
+            ImagePlus imp2 = new ImagePlus("Amplitude; z = " + parameters[3] + names,
                     amplitudeByteSelected ? ip2.convertToByteProcessor() : ip2);
             imp2.setCalibration(cal);
             imp2.show();
@@ -524,24 +534,28 @@ public class FilterFrame extends javax.swing.JFrame implements ImageListener, Pr
                 ip3.log();
             }
 
-            ImagePlus imp3 = new ImagePlus("Intensity; z = " + parameters[3],
+            ImagePlus imp3 = new ImagePlus("Intensity; z = " + parameters[3] + names,
                     intensityByteSelected ? ip3.convertToByteProcessor() : ip3);
             imp3.setCalibration(cal);
             imp3.show();
         }
 
         if (realEnabled) {
-            ImageProcessor ip4 = new FloatProcessor(ArrayUtils.real(field));
-            ImagePlus imp4 = new ImagePlus("Real; z = " + parameters[3],
-                    realByteSelected ? ip4.convertToByteProcessor() : ip4);
+            float[][] real = ArrayUtils.real(field);
+            ArrayUtils.divide(real, max);
+
+            ImageProcessor ip4 = new FloatProcessor(real);
+            ImagePlus imp4 = new ImagePlus("Real; z = " + parameters[3] + names, ip4);
             imp4.setCalibration(cal);
             imp4.show();
         }
 
         if (imaginaryEnabled) {
-            ImageProcessor ip5 = new FloatProcessor(ArrayUtils.imaginary(field));
-            ImagePlus imp5 = new ImagePlus("Imaginary; z = " + parameters[3],
-                    imaginaryByteSelected ? ip5.convertToByteProcessor() : ip5);
+            float[][] imaginary = ArrayUtils.imaginary(field);
+            ArrayUtils.divide(imaginary, max);
+
+            ImageProcessor ip5 = new FloatProcessor(imaginary);
+            ImagePlus imp5 = new ImagePlus("Imaginary; z = " + parameters[3] + names, ip5);
             imp5.setCalibration(cal);
             imp5.show();
         }

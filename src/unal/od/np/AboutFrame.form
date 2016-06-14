@@ -33,14 +33,16 @@
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
-              <Group type="103" groupAlignment="1" attributes="0">
-                  <Component id="closeBtn" min="-2" max="-2" attributes="0"/>
-                  <Group type="102" attributes="0">
-                      <Component id="logoLabel" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="versionLabel" min="-2" max="-2" attributes="0"/>
-                          <Component id="titleLabel" min="-2" max="-2" attributes="0"/>
+              <Component id="logoLabel" min="-2" max="-2" attributes="0"/>
+              <EmptySpace type="unrelated" max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="0" attributes="0">
+                  <Component id="versionLabel" min="-2" max="-2" attributes="0"/>
+                  <Component id="titleLabel" min="-2" max="-2" attributes="0"/>
+                  <Component id="devsLabel1" min="-2" max="-2" attributes="0"/>
+                  <Component id="raulLabel1" min="-2" max="-2" attributes="0"/>
+                  <Group type="103" groupAlignment="1" attributes="0">
+                      <Component id="closeBtn" min="-2" max="-2" attributes="0"/>
+                      <Group type="103" alignment="1" groupAlignment="0" attributes="0">
                           <Component id="devsLabel" min="-2" max="-2" attributes="0"/>
                           <Component id="raulLabel" min="-2" max="-2" attributes="0"/>
                           <Component id="pabloLabel" min="-2" max="-2" attributes="0"/>
@@ -58,11 +60,15 @@
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
-              <Group type="103" groupAlignment="0" max="-2" attributes="0">
+              <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" attributes="0">
                       <Component id="titleLabel" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="versionLabel" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="devsLabel1" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="raulLabel1" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="devsLabel" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
@@ -75,12 +81,12 @@
                       <Component id="groupLabel" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="univLabel" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="closeBtn" min="-2" max="-2" attributes="0"/>
                   </Group>
-                  <Component id="logoLabel" max="32767" attributes="0"/>
+                  <Component id="logoLabel" min="-2" max="-2" attributes="0"/>
               </Group>
-              <EmptySpace max="-2" attributes="0"/>
-              <Component id="closeBtn" min="-2" max="-2" attributes="0"/>
-              <EmptySpace max="-2" attributes="0"/>
+              <EmptySpace min="-2" pref="11" max="-2" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -103,7 +109,7 @@
     </Component>
     <Component class="javax.swing.JLabel" name="versionLabel">
       <Properties>
-        <Property name="text" type="java.lang.String" value="Version 1.1, March 2015"/>
+        <Property name="text" type="java.lang.String" value="Version 1.2, August 2015"/>
       </Properties>
     </Component>
     <Component class="javax.swing.JLabel" name="devsLabel">
@@ -146,6 +152,19 @@
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="closeBtnActionPerformed"/>
       </Events>
+    </Component>
+    <Component class="javax.swing.JLabel" name="devsLabel1">
+      <Properties>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+          <Font name="Tahoma" size="11" style="1"/>
+        </Property>
+        <Property name="text" type="java.lang.String" value="License pending"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="raulLabel1">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Use approved for the XXVI CNF"/>
+      </Properties>
     </Component>
   </SubComponents>
 </Form>

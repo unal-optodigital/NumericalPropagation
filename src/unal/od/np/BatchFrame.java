@@ -74,8 +74,8 @@ public class BatchFrame extends javax.swing.JFrame implements PreferencesKeys {
     private boolean phaseByteSelected;
     private boolean amplitudeByteSelected;
     private boolean intensityByteSelected;
-    private boolean realByteSelected;
-    private boolean imaginaryByteSelected;
+//    private boolean realByteSelected;
+//    private boolean imaginaryByteSelected;
     // </editor-fold>
 
     private final Preferences pref;
@@ -142,8 +142,8 @@ public class BatchFrame extends javax.swing.JFrame implements PreferencesKeys {
         phaseByteSelected = pref.getBoolean(PHASE_8_BIT, true);
         amplitudeByteSelected = pref.getBoolean(AMPLITUDE_8_BIT, true);
         intensityByteSelected = pref.getBoolean(INTENSITY_8_BIT, true);
-        realByteSelected = pref.getBoolean(REAL_8_BIT, true);
-        imaginaryByteSelected = pref.getBoolean(IMAGINARY_8_BIT, true);
+//        realByteSelected = pref.getBoolean(REAL_8_BIT, true);
+//        imaginaryByteSelected = pref.getBoolean(IMAGINARY_8_BIT, true);
     }
 
     private void fixUnits() {
@@ -481,13 +481,21 @@ public class BatchFrame extends javax.swing.JFrame implements PreferencesKeys {
             float[][] field = data.getOutputField();
             String label = "z = " + df.format(umToUnits(z)) + " " + zUnits;
 
+            float[][] amplitude = null;
+            float max = Float.MIN_VALUE;
+
+            if (realEnabled || imaginaryEnabled) {
+                amplitude = ArrayUtils.modulus(field);
+                max = ArrayUtils.max(amplitude);
+            }
+
             if (phaseEnabled) {
                 ImageProcessor ip1 = new FloatProcessor(ArrayUtils.phase(field));
                 phaseStack.addSlice(label, phaseByteSelected ? ip1.convertToByteProcessor() : ip1);
             }
 
             if (amplitudeEnabled) {
-                ImageProcessor ip2 = new FloatProcessor(ArrayUtils.modulus(field));
+                ImageProcessor ip2 = new FloatProcessor(realEnabled || imaginaryEnabled ? amplitude : ArrayUtils.modulus(field));
                 if (amplitudeLogSelected) {
                     ip2.log();
                 }
@@ -503,13 +511,19 @@ public class BatchFrame extends javax.swing.JFrame implements PreferencesKeys {
             }
 
             if (realEnabled) {
-                ImageProcessor ip4 = new FloatProcessor(ArrayUtils.real(field));
-                realStack.addSlice(label, realByteSelected ? ip4.convertToByteProcessor() : ip4);
+                float[][] real = ArrayUtils.real(field);
+                ArrayUtils.divide(real, max);
+
+                ImageProcessor ip4 = new FloatProcessor(real);
+                realStack.addSlice(label, ip4);
             }
 
             if (imaginaryEnabled) {
-                ImageProcessor ip5 = new FloatProcessor(ArrayUtils.imaginary(field));
-                imaginaryStack.addSlice(label, imaginaryByteSelected ? ip5.convertToByteProcessor() : ip5);
+                float[][] imaginary = ArrayUtils.imaginary(field);
+                ArrayUtils.divide(imaginary, max);
+
+                ImageProcessor ip5 = new FloatProcessor(imaginary);
+                imaginaryStack.addSlice(label, ip5);
             }
 
             z += step;
@@ -517,8 +531,10 @@ public class BatchFrame extends javax.swing.JFrame implements PreferencesKeys {
 
         Calibration cal = parent.getCalibration();
 
+        String names = "; Re: " + parameters[0] + "; Im: " + parameters[1];
+
         if (phaseEnabled) {
-            ImagePlus imp1 = new ImagePlus("Phase", phaseStack);
+            ImagePlus imp1 = new ImagePlus("Phase" + names, phaseStack);
             if (idx != 1) {
                 imp1.setCalibration(cal);
             }
@@ -526,7 +542,7 @@ public class BatchFrame extends javax.swing.JFrame implements PreferencesKeys {
         }
 
         if (amplitudeEnabled) {
-            ImagePlus imp2 = new ImagePlus("Amplitude", amplitudeStack);
+            ImagePlus imp2 = new ImagePlus("Amplitude" + names, amplitudeStack);
             if (idx != 1) {
                 imp2.setCalibration(cal);
             }
@@ -534,7 +550,7 @@ public class BatchFrame extends javax.swing.JFrame implements PreferencesKeys {
         }
 
         if (intensityEnabled) {
-            ImagePlus imp3 = new ImagePlus("Intensity", intensityStack);
+            ImagePlus imp3 = new ImagePlus("Intensity" + names, intensityStack);
             if (idx != 1) {
                 imp3.setCalibration(cal);
             }
@@ -542,7 +558,7 @@ public class BatchFrame extends javax.swing.JFrame implements PreferencesKeys {
         }
 
         if (realEnabled) {
-            ImagePlus imp4 = new ImagePlus("Real", realStack);
+            ImagePlus imp4 = new ImagePlus("Real" + names, realStack);
             if (idx != 1) {
                 imp4.setCalibration(cal);
             }
@@ -550,7 +566,7 @@ public class BatchFrame extends javax.swing.JFrame implements PreferencesKeys {
         }
 
         if (imaginaryEnabled) {
-            ImagePlus imp5 = new ImagePlus("Imaginary", imaginaryStack);
+            ImagePlus imp5 = new ImagePlus("Imaginary" + names, imaginaryStack);
             if (idx != 1) {
                 imp5.setCalibration(cal);
             }

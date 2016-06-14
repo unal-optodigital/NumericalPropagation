@@ -44,7 +44,7 @@ import unal.od.jdiffraction.cpu.utils.ArrayUtils;
 public class MainFrame extends javax.swing.JFrame implements ImageListener, PreferencesKeys {
 
     private static final String TITLE = "Numerical Propagation";
-    private static final String LOG_HEADER = "Version 1.1 - March 2015";
+    private static final String LOG_HEADER = "Version 1.2 - August 2015";
     private static final String LOG_SEPARATOR = "\n---------------------------";
 
     public static final String[] PROPAGATION_METHOD = new String[]{"Angular Spectrum", "Fresnel", "Fresnel - Bluestein", "Automatic"};
@@ -159,8 +159,8 @@ public class MainFrame extends javax.swing.JFrame implements ImageListener, Pref
     private boolean phaseByteSelected;
     private boolean amplitudeByteSelected;
     private boolean intensityByteSelected;
-    private boolean realByteSelected;
-    private boolean imaginaryByteSelected;
+//    private boolean realByteSelected;
+//    private boolean imaginaryByteSelected;
 
     private boolean relationLock;
 
@@ -329,8 +329,8 @@ public class MainFrame extends javax.swing.JFrame implements ImageListener, Pref
         phaseByteSelected = pref.getBoolean(PHASE_8_BIT, true);
         amplitudeByteSelected = pref.getBoolean(AMPLITUDE_8_BIT, true);
         intensityByteSelected = pref.getBoolean(INTENSITY_8_BIT, true);
-        realByteSelected = pref.getBoolean(REAL_8_BIT, true);
-        imaginaryByteSelected = pref.getBoolean(IMAGINARY_8_BIT, true);
+//        realByteSelected = pref.getBoolean(REAL_8_BIT, true);
+//        imaginaryByteSelected = pref.getBoolean(IMAGINARY_8_BIT, true);
     }
 
     /**
@@ -577,6 +577,10 @@ public class MainFrame extends javax.swing.JFrame implements ImageListener, Pref
         //lambda
         try {
             lambdaUser = Float.parseFloat(lambdaField.getText());
+            if (lambdaUser <= 0) {
+                JOptionPane.showMessageDialog(this, "Wavelength must be a positive number and different from 0.", "Error", JOptionPane.ERROR_MESSAGE);
+                return false;
+            }
         } catch (NumberFormatException e) {
             JOptionPane.showMessageDialog(this, "Please insert a valid wavelength.", "Error", JOptionPane.ERROR_MESSAGE);
             return false;
@@ -593,6 +597,10 @@ public class MainFrame extends javax.swing.JFrame implements ImageListener, Pref
         //input width
         try {
             inputWUser = Float.parseFloat(inputWField.getText());
+            if (inputWUser == 0) {
+                JOptionPane.showMessageDialog(this, "Input width must be different from 0.", "Error", JOptionPane.ERROR_MESSAGE);
+                return false;
+            }
         } catch (NumberFormatException e) {
             JOptionPane.showMessageDialog(this, "Please insert a valid input width.", "Error", JOptionPane.ERROR_MESSAGE);
             return false;
@@ -601,6 +609,10 @@ public class MainFrame extends javax.swing.JFrame implements ImageListener, Pref
         //input height
         try {
             inputHUser = Float.parseFloat(inputHField.getText());
+            if (inputHUser == 0) {
+                JOptionPane.showMessageDialog(this, "Input height must be different from 0.", "Error", JOptionPane.ERROR_MESSAGE);
+                return false;
+            }
         } catch (NumberFormatException e) {
             JOptionPane.showMessageDialog(this, "Please insert a valid input height.", "Error", JOptionPane.ERROR_MESSAGE);
             return false;
@@ -612,6 +624,10 @@ public class MainFrame extends javax.swing.JFrame implements ImageListener, Pref
         if (methodIdx == 2) {
             try {
                 outputWUser = Float.parseFloat(outputWField.getText());
+                if (outputWUser == 0) {
+                    JOptionPane.showMessageDialog(this, "Output width must be different from 0.", "Error", JOptionPane.ERROR_MESSAGE);
+                    return false;
+                }
             } catch (NumberFormatException e) {
                 JOptionPane.showMessageDialog(this, "Please insert a valid output width.", "Error", JOptionPane.ERROR_MESSAGE);
                 return false;
@@ -619,6 +635,10 @@ public class MainFrame extends javax.swing.JFrame implements ImageListener, Pref
 
             try {
                 outputHUser = Float.parseFloat(outputHField.getText());
+                if (outputHUser == 0) {
+                    JOptionPane.showMessageDialog(this, "Output height must be different from 0.", "Error", JOptionPane.ERROR_MESSAGE);
+                    return false;
+                }
             } catch (NumberFormatException e) {
                 JOptionPane.showMessageDialog(this, "Please insert a valid output height.", "Error", JOptionPane.ERROR_MESSAGE);
                 return false;
@@ -659,6 +679,10 @@ public class MainFrame extends javax.swing.JFrame implements ImageListener, Pref
         //lambda
         try {
             lambdaUser = Float.parseFloat(lambdaField.getText());
+            if (lambdaUser <= 0) {
+                JOptionPane.showMessageDialog(this, "Wavelength must be a positive number, different from 0.", "Error", JOptionPane.ERROR_MESSAGE);
+                return false;
+            }
         } catch (NumberFormatException e) {
             JOptionPane.showMessageDialog(this, "Please insert a valid wavelength.", "Error", JOptionPane.ERROR_MESSAGE);
             return false;
@@ -671,7 +695,7 @@ public class MainFrame extends javax.swing.JFrame implements ImageListener, Pref
             JOptionPane.showMessageDialog(this, "Please insert a valid step.", "Error", JOptionPane.ERROR_MESSAGE);
             return false;
         }
-        
+
         stepUm = stepUser;
 
         if (zUnits.equals("nm")) {
@@ -690,6 +714,10 @@ public class MainFrame extends javax.swing.JFrame implements ImageListener, Pref
         //input width
         try {
             inputWUser = Float.parseFloat(inputWField.getText());
+            if (inputWUser == 0) {
+                JOptionPane.showMessageDialog(this, "Input width must be different from 0.", "Error", JOptionPane.ERROR_MESSAGE);
+                return false;
+            }
         } catch (NumberFormatException e) {
             JOptionPane.showMessageDialog(this, "Please insert a valid input width.", "Error", JOptionPane.ERROR_MESSAGE);
             return false;
@@ -698,6 +726,10 @@ public class MainFrame extends javax.swing.JFrame implements ImageListener, Pref
         //input height
         try {
             inputHUser = Float.parseFloat(inputHField.getText());
+            if (inputHUser == 0) {
+                JOptionPane.showMessageDialog(this, "Input height must be different from 0.", "Error", JOptionPane.ERROR_MESSAGE);
+                return false;
+            }
         } catch (NumberFormatException e) {
             JOptionPane.showMessageDialog(this, "Please insert a valid input height.", "Error", JOptionPane.ERROR_MESSAGE);
             return false;
@@ -709,6 +741,10 @@ public class MainFrame extends javax.swing.JFrame implements ImageListener, Pref
         if (methodIdx == 2) {
             try {
                 outputWUser = Float.parseFloat(outputWField.getText());
+                if (outputWUser == 0) {
+                    JOptionPane.showMessageDialog(this, "Output width must be different from 0.", "Error", JOptionPane.ERROR_MESSAGE);
+                    return false;
+                }
             } catch (NumberFormatException e) {
                 JOptionPane.showMessageDialog(this, "Please insert a valid output width.", "Error", JOptionPane.ERROR_MESSAGE);
                 return false;
@@ -716,6 +752,10 @@ public class MainFrame extends javax.swing.JFrame implements ImageListener, Pref
 
             try {
                 outputHUser = Float.parseFloat(outputHField.getText());
+                if (outputHUser == 0) {
+                    JOptionPane.showMessageDialog(this, "Output height must be different from 0.", "Error", JOptionPane.ERROR_MESSAGE);
+                    return false;
+                }
             } catch (NumberFormatException e) {
                 JOptionPane.showMessageDialog(this, "Please insert a valid output height.", "Error", JOptionPane.ERROR_MESSAGE);
                 return false;
@@ -782,21 +822,31 @@ public class MainFrame extends javax.swing.JFrame implements ImageListener, Pref
 
         calibrate(useZ);
 
+        String names = "; Re: " + parameters[0] + "; Im: " + parameters[1];
+
+        float[][] amplitude = null;
+        float max = Float.MIN_VALUE;
+
+        if (realEnabled || imaginaryEnabled) {
+            amplitude = ArrayUtils.modulus(field);
+            max = ArrayUtils.max(amplitude);
+        }
+
         if (phaseEnabled) {
             ImageProcessor ip1 = new FloatProcessor(ArrayUtils.phase(field));
-            ImagePlus imp1 = new ImagePlus("Phase; z = " + parameters[3],
+            ImagePlus imp1 = new ImagePlus("Phase; z = " + parameters[3] + names,
                     phaseByteSelected ? ip1.convertToByteProcessor() : ip1);
             imp1.setCalibration(cal);
             imp1.show();
         }
 
         if (amplitudeEnabled) {
-            ImageProcessor ip2 = new FloatProcessor(ArrayUtils.modulus(field));
+            ImageProcessor ip2 = new FloatProcessor(realEnabled || imaginaryEnabled ? amplitude : ArrayUtils.modulus(field));
             if (amplitudeLogSelected) {
                 ip2.log();
             }
 
-            ImagePlus imp2 = new ImagePlus("Amplitude; z = " + parameters[3],
+            ImagePlus imp2 = new ImagePlus("Amplitude; z = " + parameters[3] + names,
                     amplitudeByteSelected ? ip2.convertToByteProcessor() : ip2);
             imp2.setCalibration(cal);
             imp2.show();
@@ -808,24 +858,28 @@ public class MainFrame extends javax.swing.JFrame implements ImageListener, Pref
                 ip3.log();
             }
 
-            ImagePlus imp3 = new ImagePlus("Intensity; z = " + parameters[3],
+            ImagePlus imp3 = new ImagePlus("Intensity; z = " + parameters[3] + names,
                     intensityByteSelected ? ip3.convertToByteProcessor() : ip3);
             imp3.setCalibration(cal);
             imp3.show();
         }
 
         if (realEnabled) {
-            ImageProcessor ip4 = new FloatProcessor(ArrayUtils.real(field));
-            ImagePlus imp4 = new ImagePlus("Real; z = " + parameters[3],
-                    realByteSelected ? ip4.convertToByteProcessor() : ip4);
+            float[][] real = ArrayUtils.real(field);
+            ArrayUtils.divide(real, max);
+
+            ImageProcessor ip4 = new FloatProcessor(real);
+            ImagePlus imp4 = new ImagePlus("Real; z = " + parameters[3] + names, ip4);
             imp4.setCalibration(cal);
             imp4.show();
         }
 
-        if (realEnabled) {
-            ImageProcessor ip5 = new FloatProcessor(ArrayUtils.imaginary(field));
-            ImagePlus imp5 = new ImagePlus("Imaginary; z = " + parameters[3],
-                    imaginaryByteSelected ? ip5.convertToByteProcessor() : ip5);
+        if (imaginaryEnabled) {
+            float[][] imaginary = ArrayUtils.imaginary(field);
+            ArrayUtils.divide(imaginary, max);
+
+            ImageProcessor ip5 = new FloatProcessor(imaginary);
+            ImagePlus imp5 = new ImagePlus("Imaginary; z = " + parameters[3] + names, ip5);
             imp5.setCalibration(cal);
             imp5.show();
         }
@@ -892,11 +946,6 @@ public class MainFrame extends javax.swing.JFrame implements ImageListener, Pref
             dyOut *= 1E-6f;
         }
 
-//        System.out.println("dx " + dx);
-//        System.out.println("dy " + dy);
-//        
-//        System.out.println("dxo " + dxOut);
-//        System.out.println("dyo " + dyOut);
         cal.setUnit(outputSizeUnits);
         cal.pixelWidth = dxOut;
         cal.pixelHeight = dyOut;

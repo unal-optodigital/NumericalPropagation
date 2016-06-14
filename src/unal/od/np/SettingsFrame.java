@@ -19,10 +19,6 @@ import java.awt.Toolkit;
 import java.util.prefs.Preferences;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
-import static unal.od.np.PreferencesKeys.CURV_RADIUS;
-import static unal.od.np.PreferencesKeys.IS_PLANE;
-import static unal.od.np.PreferencesKeys.IS_STEP;
-import static unal.od.np.PreferencesKeys.MAX_PLANES;
 
 /**
  *
@@ -60,13 +56,16 @@ public class SettingsFrame extends javax.swing.JFrame implements PreferencesKeys
     private boolean fftLogSelected;
     private boolean amplitudeLogSelected;
     private boolean intensityLogSelected;
-    
+
     private boolean fftByteSelected;
     private boolean phaseByteSelected;
     private boolean amplitudeByteSelected;
     private boolean intensityByteSelected;
-    private boolean realByteSelected;
-    private boolean imaginaryByteSelected;
+//    private boolean realByteSelected;
+//    private boolean imaginaryByteSelected;
+
+    //flag
+    private boolean propagationError = false;
 
     private final Preferences pref;
 
@@ -123,13 +122,13 @@ public class SettingsFrame extends javax.swing.JFrame implements PreferencesKeys
         fftLogSelected = pref.getBoolean(FFT_LOG, true);
         amplitudeLogSelected = pref.getBoolean(AMPLITUDE_LOG, true);
         intensityLogSelected = pref.getBoolean(INTENSITY_LOG, true);
-        
+
         fftByteSelected = pref.getBoolean(FFT_8_BIT, true);
         phaseByteSelected = pref.getBoolean(PHASE_8_BIT, true);
         amplitudeByteSelected = pref.getBoolean(AMPLITUDE_8_BIT, true);
         intensityByteSelected = pref.getBoolean(INTENSITY_8_BIT, true);
-        realByteSelected = pref.getBoolean(REAL_8_BIT, true);
-        imaginaryByteSelected = pref.getBoolean(IMAGINARY_8_BIT, true);
+//        realByteSelected = pref.getBoolean(REAL_8_BIT, true);
+//        imaginaryByteSelected = pref.getBoolean(IMAGINARY_8_BIT, true);
     }
 
     private int unitToIdx(String unit) {
@@ -196,16 +195,18 @@ public class SettingsFrame extends javax.swing.JFrame implements PreferencesKeys
         phaseByteChk = new javax.swing.JCheckBox();
         amplitudeByteChk = new javax.swing.JCheckBox();
         intensityByteChk = new javax.swing.JCheckBox();
-        realByteChk = new javax.swing.JCheckBox();
-        imaginaryByteChk = new javax.swing.JCheckBox();
         cancelBtn = new javax.swing.JButton();
         okBtn = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle(TITLE);
         setIconImage(Toolkit.getDefaultToolkit().getImage(getClass().getResource("/icon.png")));
+        setMaximumSize(new java.awt.Dimension(229, 389));
+        setMinimumSize(new java.awt.Dimension(229, 389));
         setResizable(false);
 
+        tabUnitsPanel.setMaximumSize(new java.awt.Dimension(214, 322));
+        tabUnitsPanel.setMinimumSize(new java.awt.Dimension(214, 322));
         tabUnitsPanel.setPreferredSize(new java.awt.Dimension(214, 322));
 
         unitsPanel.setBorder(javax.swing.BorderFactory.createTitledBorder("Units"));
@@ -214,61 +215,81 @@ public class SettingsFrame extends javax.swing.JFrame implements PreferencesKeys
 
         lambdaCombo.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Nanometers", "Micrometers", "Millimeters", "Centimeters", "Meters" }));
         lambdaCombo.setSelectedIndex(lambdaIdx);
+        lambdaCombo.setMaximumSize(new java.awt.Dimension(83, 20));
 
         inputSizeCombo.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Nanometers", "Micrometers", "Millimeters", "Centimeters", "Meters" }));
         inputSizeCombo.setSelectedIndex(inputSizeIdx);
+        inputSizeCombo.setMaximumSize(new java.awt.Dimension(83, 20));
 
         zCombo.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Nanometers", "Micrometers", "Millimeters", "Centimeters", "Meters" }));
         zCombo.setSelectedIndex(zIdx);
+        zCombo.setMaximumSize(new java.awt.Dimension(83, 20));
 
         outputSizeCombo.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Nanometers", "Micrometers", "Millimeters", "Centimeters", "Meters" }));
         outputSizeCombo.setSelectedIndex(outputSizeIdx);
+        outputSizeCombo.setMaximumSize(new java.awt.Dimension(83, 20));
 
         curvRadiusCombo.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Nanometers", "Micrometers", "Millimeters", "Centimeters", "Meters" }));
         curvRadiusCombo.setSelectedIndex(curvRadiusIdx);
+        curvRadiusCombo.setMaximumSize(new java.awt.Dimension(83, 20));
 
         lambdaLabel.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
         lambdaLabel.setText("Wavelength:");
+        lambdaLabel.setMaximumSize(new java.awt.Dimension(69, 14));
+        lambdaLabel.setMinimumSize(new java.awt.Dimension(69, 14));
+        lambdaLabel.setPreferredSize(new java.awt.Dimension(69, 14));
 
         zLabel.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
         zLabel.setText("Distance:");
+        zLabel.setMaximumSize(new java.awt.Dimension(69, 14));
+        zLabel.setMinimumSize(new java.awt.Dimension(69, 14));
+        zLabel.setPreferredSize(new java.awt.Dimension(69, 14));
 
         inputWLabel.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
         inputWLabel.setText("Input size:");
+        inputWLabel.setMaximumSize(new java.awt.Dimension(69, 14));
+        inputWLabel.setMinimumSize(new java.awt.Dimension(69, 14));
+        inputWLabel.setPreferredSize(new java.awt.Dimension(69, 14));
 
         outputWLabel.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
         outputWLabel.setText("Output size:");
+        outputWLabel.setMaximumSize(new java.awt.Dimension(69, 14));
+        outputWLabel.setMinimumSize(new java.awt.Dimension(69, 14));
+        outputWLabel.setPreferredSize(new java.awt.Dimension(69, 14));
 
         curvRadiusCLabel.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
         curvRadiusCLabel.setText("Curv. Radius:");
+        curvRadiusCLabel.setMaximumSize(new java.awt.Dimension(69, 14));
+        curvRadiusCLabel.setMinimumSize(new java.awt.Dimension(69, 14));
+        curvRadiusCLabel.setPreferredSize(new java.awt.Dimension(69, 14));
 
         javax.swing.GroupLayout unitsPanelLayout = new javax.swing.GroupLayout(unitsPanel);
         unitsPanel.setLayout(unitsPanelLayout);
         unitsPanelLayout.setHorizontalGroup(
             unitsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(unitsPanelLayout.createSequentialGroup()
-                .addGap(13, 13, 13)
-                .addGroup(unitsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, unitsPanelLayout.createSequentialGroup()
-                        .addComponent(outputWLabel)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(outputSizeCombo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, unitsPanelLayout.createSequentialGroup()
-                        .addComponent(inputWLabel)
+                .addContainerGap()
+                .addGroup(unitsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                    .addGroup(unitsPanelLayout.createSequentialGroup()
+                        .addComponent(inputWLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(inputSizeCombo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, unitsPanelLayout.createSequentialGroup()
-                        .addComponent(lambdaLabel)
+                    .addGroup(unitsPanelLayout.createSequentialGroup()
+                        .addComponent(lambdaLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(lambdaCombo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, unitsPanelLayout.createSequentialGroup()
-                        .addComponent(zLabel)
+                    .addGroup(unitsPanelLayout.createSequentialGroup()
+                        .addComponent(zLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(zCombo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, unitsPanelLayout.createSequentialGroup()
-                        .addComponent(curvRadiusCLabel)
+                    .addGroup(unitsPanelLayout.createSequentialGroup()
+                        .addComponent(curvRadiusCLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(curvRadiusCombo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(curvRadiusCombo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(unitsPanelLayout.createSequentialGroup()
+                        .addComponent(outputWLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(outputSizeCombo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
         unitsPanelLayout.setVerticalGroup(
@@ -277,23 +298,23 @@ public class SettingsFrame extends javax.swing.JFrame implements PreferencesKeys
                 .addContainerGap()
                 .addGroup(unitsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(lambdaCombo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(lambdaLabel))
+                    .addComponent(lambdaLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(unitsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(zCombo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(zLabel))
+                    .addComponent(zLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(unitsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(inputSizeCombo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(inputWLabel))
+                    .addComponent(inputWLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(unitsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(outputSizeCombo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(outputWLabel))
+                    .addComponent(outputWLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(unitsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(curvRadiusCombo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(curvRadiusCLabel))
+                    .addComponent(curvRadiusCLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(11, 11, 11))
         );
 
@@ -317,7 +338,7 @@ public class SettingsFrame extends javax.swing.JFrame implements PreferencesKeys
                     .addGroup(tabUnitsPanelLayout.createSequentialGroup()
                         .addGap(124, 124, 124)
                         .addComponent(applyUnitsBtn, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(unitsPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(unitsPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap())
         );
         tabUnitsPanelLayout.setVerticalGroup(
@@ -332,9 +353,13 @@ public class SettingsFrame extends javax.swing.JFrame implements PreferencesKeys
 
         settingsPane.addTab("Units", tabUnitsPanel);
 
+        propagationPanel.setMaximumSize(new java.awt.Dimension(214, 322));
+        propagationPanel.setMinimumSize(new java.awt.Dimension(214, 322));
         propagationPanel.setPreferredSize(new java.awt.Dimension(214, 322));
 
         illuminationPanel.setBorder(javax.swing.BorderFactory.createTitledBorder("Illumination"));
+        illuminationPanel.setMaximumSize(new java.awt.Dimension(194, 117));
+        illuminationPanel.setMinimumSize(new java.awt.Dimension(194, 117));
         illuminationPanel.setPreferredSize(new java.awt.Dimension(194, 117));
 
         illuminationGroup.add(planeWaveRadio);
@@ -413,6 +438,8 @@ public class SettingsFrame extends javax.swing.JFrame implements PreferencesKeys
         });
 
         batchPanel.setBorder(javax.swing.BorderFactory.createTitledBorder("Batch Propagation"));
+        batchPanel.setMaximumSize(new java.awt.Dimension(194, 117));
+        batchPanel.setMinimumSize(new java.awt.Dimension(194, 117));
         batchPanel.setPreferredSize(new java.awt.Dimension(194, 117));
 
         batchGroup.add(stepRadio);
@@ -495,8 +522,8 @@ public class SettingsFrame extends javax.swing.JFrame implements PreferencesKeys
                     .addGroup(propagationPanelLayout.createSequentialGroup()
                         .addGroup(propagationPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(filterChk)
-                            .addComponent(illuminationPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(batchPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                            .addComponent(illuminationPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(batchPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
@@ -518,9 +545,14 @@ public class SettingsFrame extends javax.swing.JFrame implements PreferencesKeys
 
         settingsPane.addTab("Propagation", propagationPanel);
 
+        scalingPanel.setMaximumSize(new java.awt.Dimension(214, 322));
+        scalingPanel.setMinimumSize(new java.awt.Dimension(214, 322));
         scalingPanel.setPreferredSize(new java.awt.Dimension(214, 322));
 
         logPanel.setBorder(javax.swing.BorderFactory.createTitledBorder("Logarithmic Scaling"));
+        logPanel.setMaximumSize(new java.awt.Dimension(194, 98));
+        logPanel.setMinimumSize(new java.awt.Dimension(194, 98));
+        logPanel.setPreferredSize(new java.awt.Dimension(194, 98));
 
         intensityLogChk.setSelected(intensityLogSelected);
         intensityLogChk.setText("Intensity");
@@ -569,6 +601,9 @@ public class SettingsFrame extends javax.swing.JFrame implements PreferencesKeys
         });
 
         bytePanel.setBorder(javax.swing.BorderFactory.createTitledBorder("8-bit Scaling"));
+        bytePanel.setMaximumSize(new java.awt.Dimension(194, 162));
+        bytePanel.setMinimumSize(new java.awt.Dimension(194, 162));
+        bytePanel.setPreferredSize(new java.awt.Dimension(194, 162));
 
         fftByteChk.setSelected(fftByteSelected);
         fftByteChk.setText("Fast Fourier Transform");
@@ -586,14 +621,6 @@ public class SettingsFrame extends javax.swing.JFrame implements PreferencesKeys
         intensityByteChk.setText("Intensity");
         intensityByteChk.setMargin(new java.awt.Insets(0, 0, 0, 0));
 
-        realByteChk.setSelected(realByteSelected);
-        realByteChk.setText("Real");
-        realByteChk.setMargin(new java.awt.Insets(0, 0, 0, 0));
-
-        imaginaryByteChk.setSelected(imaginaryByteSelected);
-        imaginaryByteChk.setText("Imaginary");
-        imaginaryByteChk.setMargin(new java.awt.Insets(0, 0, 0, 0));
-
         javax.swing.GroupLayout bytePanelLayout = new javax.swing.GroupLayout(bytePanel);
         bytePanel.setLayout(bytePanelLayout);
         bytePanelLayout.setHorizontalGroup(
@@ -604,9 +631,7 @@ public class SettingsFrame extends javax.swing.JFrame implements PreferencesKeys
                     .addComponent(fftByteChk)
                     .addComponent(amplitudeByteChk)
                     .addComponent(intensityByteChk)
-                    .addComponent(phaseByteChk)
-                    .addComponent(realByteChk)
-                    .addComponent(imaginaryByteChk))
+                    .addComponent(phaseByteChk))
                 .addGap(41, 41, 41))
         );
         bytePanelLayout.setVerticalGroup(
@@ -620,10 +645,6 @@ public class SettingsFrame extends javax.swing.JFrame implements PreferencesKeys
                 .addComponent(amplitudeByteChk)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(intensityByteChk)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(realByteChk)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(imaginaryByteChk)
                 .addContainerGap())
         );
 
@@ -650,8 +671,8 @@ public class SettingsFrame extends javax.swing.JFrame implements PreferencesKeys
                 .addContainerGap()
                 .addComponent(logPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(bytePanel, javax.swing.GroupLayout.PREFERRED_SIZE, 162, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(bytePanel, javax.swing.GroupLayout.PREFERRED_SIZE, 123, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(50, 50, 50)
                 .addComponent(applyScalingBtn, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
@@ -733,11 +754,13 @@ public class SettingsFrame extends javax.swing.JFrame implements PreferencesKeys
             int planes = Integer.parseInt(warningField.getText());
             if (planes <= 1) {
                 JOptionPane.showMessageDialog(this, "Max. Planes must be greater than 1.", "Error", JOptionPane.ERROR_MESSAGE);
+                propagationError = true;
                 return;
             }
             pref.putInt(MAX_PLANES, planes);
         } catch (NumberFormatException exc) {
             JOptionPane.showMessageDialog(this, "Please insert a valid integer.", "Error", JOptionPane.ERROR_MESSAGE);
+            propagationError = true;
             return;
         }
 
@@ -747,6 +770,7 @@ public class SettingsFrame extends javax.swing.JFrame implements PreferencesKeys
                 float curvature = Float.parseFloat(curvRadiusField.getText());
                 if (curvature == 0) {
                     JOptionPane.showMessageDialog(this, "Curvature radius value must be different from 0.", "Error", JOptionPane.ERROR_MESSAGE);
+                    propagationError = true;
                     return;
                 }
 
@@ -764,10 +788,13 @@ public class SettingsFrame extends javax.swing.JFrame implements PreferencesKeys
                 pref.putFloat(CURV_RADIUS, curvature);
             } catch (NumberFormatException exc) {
                 JOptionPane.showMessageDialog(this, "Please insert a valid curvature value.", "Error", JOptionPane.ERROR_MESSAGE);
+                propagationError = true;
+                propagationError = true;
                 return;
             }
         }
-        
+
+        propagationError = false;
         parent.updatePropagationPrefs();
     }//GEN-LAST:event_applyPropagationPanelActionPerformed
 
@@ -780,9 +807,9 @@ public class SettingsFrame extends javax.swing.JFrame implements PreferencesKeys
         pref.putBoolean(PHASE_8_BIT, phaseByteChk.isSelected());
         pref.putBoolean(AMPLITUDE_8_BIT, amplitudeByteChk.isSelected());
         pref.putBoolean(INTENSITY_8_BIT, intensityByteChk.isSelected());
-        pref.putBoolean(REAL_8_BIT, realByteChk.isSelected());
-        pref.putBoolean(IMAGINARY_8_BIT, imaginaryByteChk.isSelected());
-        
+//        pref.putBoolean(REAL_8_BIT, realByteChk.isSelected());
+//        pref.putBoolean(IMAGINARY_8_BIT, imaginaryByteChk.isSelected());
+
         parent.updateScalingPrefs();
     }//GEN-LAST:event_applyScalingBtnActionPerformed
 
@@ -795,14 +822,19 @@ public class SettingsFrame extends javax.swing.JFrame implements PreferencesKeys
     }//GEN-LAST:event_spheWaveRadioActionPerformed
 
     private void rstDialogsBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rstDialogsBtnActionPerformed
-       pref.putBoolean(SHOW_FREQUENCIES_DIALOG, true);
+        pref.putBoolean(SHOW_FREQUENCIES_DIALOG, true);
     }//GEN-LAST:event_rstDialogsBtnActionPerformed
 
     private void okBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okBtnActionPerformed
-        applyUnitsBtnActionPerformed(null);
         applyPropagationPanelActionPerformed(null);
+        if (propagationError) {
+            propagationError = false;
+            return;
+        }
+
+        applyUnitsBtnActionPerformed(null);
         applyScalingBtnActionPerformed(null);
-        
+
         setVisible(false);
         dispose();
     }//GEN-LAST:event_okBtnActionPerformed
@@ -836,7 +868,6 @@ public class SettingsFrame extends javax.swing.JFrame implements PreferencesKeys
     private javax.swing.JCheckBox filterChk;
     private javax.swing.ButtonGroup illuminationGroup;
     private javax.swing.JPanel illuminationPanel;
-    private javax.swing.JCheckBox imaginaryByteChk;
     private javax.swing.JComboBox inputSizeCombo;
     private javax.swing.JLabel inputWLabel;
     private javax.swing.JCheckBox intensityByteChk;
@@ -851,7 +882,6 @@ public class SettingsFrame extends javax.swing.JFrame implements PreferencesKeys
     private javax.swing.JRadioButton planeWaveRadio;
     private javax.swing.JRadioButton planesRadio;
     private javax.swing.JPanel propagationPanel;
-    private javax.swing.JCheckBox realByteChk;
     private javax.swing.JButton rstDialogsBtn;
     private javax.swing.JPanel scalingPanel;
     private javax.swing.JTabbedPane settingsPane;
