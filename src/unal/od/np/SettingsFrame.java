@@ -789,7 +789,6 @@ public class SettingsFrame extends javax.swing.JFrame implements PreferencesKeys
             } catch (NumberFormatException exc) {
                 JOptionPane.showMessageDialog(this, "Please insert a valid curvature value.", "Error", JOptionPane.ERROR_MESSAGE);
                 propagationError = true;
-                propagationError = true;
                 return;
             }
         }

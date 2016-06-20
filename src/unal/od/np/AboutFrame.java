@@ -45,14 +45,14 @@ public class AboutFrame extends javax.swing.JFrame {
         titleLabel = new javax.swing.JLabel();
         versionLabel = new javax.swing.JLabel();
         devsLabel = new javax.swing.JLabel();
-        raulLabel = new javax.swing.JLabel();
         pabloLabel = new javax.swing.JLabel();
+        raulLabel = new javax.swing.JLabel();
         jorgeLabel = new javax.swing.JLabel();
         groupLabel = new javax.swing.JLabel();
         univLabel = new javax.swing.JLabel();
         closeBtn = new javax.swing.JButton();
-        devsLabel1 = new javax.swing.JLabel();
-        raulLabel1 = new javax.swing.JLabel();
+        licenseLabel = new javax.swing.JLabel();
+        licenseCNFLabel = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("About Numerical Propagation");
@@ -70,9 +70,9 @@ public class AboutFrame extends javax.swing.JFrame {
         devsLabel.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
         devsLabel.setText("Developed by:");
 
-        raulLabel.setText("Pablo Piedrahita-Quintero");
+        pabloLabel.setText("Pablo Piedrahita-Quintero");
 
-        pabloLabel.setText("Raul Castañeda Quintero");
+        raulLabel.setText("Raul Castañeda Quintero");
 
         jorgeLabel.setText("Jorge Garcia-Sucerquia");
 
@@ -87,10 +87,10 @@ public class AboutFrame extends javax.swing.JFrame {
             }
         });
 
-        devsLabel1.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
-        devsLabel1.setText("License pending");
+        licenseLabel.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
+        licenseLabel.setText("License pending");
 
-        raulLabel1.setText("Use approved for the XXVI CNF");
+        licenseCNFLabel.setText("Use approved for the XXVI CNF");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -103,14 +103,14 @@ public class AboutFrame extends javax.swing.JFrame {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(versionLabel)
                     .addComponent(titleLabel)
-                    .addComponent(devsLabel1)
-                    .addComponent(raulLabel1)
+                    .addComponent(licenseLabel)
+                    .addComponent(licenseCNFLabel)
                     .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                         .addComponent(closeBtn)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(devsLabel)
-                            .addComponent(raulLabel)
                             .addComponent(pabloLabel)
+                            .addComponent(raulLabel)
                             .addComponent(jorgeLabel)
                             .addComponent(groupLabel)
                             .addComponent(univLabel))))
@@ -126,15 +126,15 @@ public class AboutFrame extends javax.swing.JFrame {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(versionLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(devsLabel1)
+                        .addComponent(licenseLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(raulLabel1)
+                        .addComponent(licenseCNFLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(devsLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(raulLabel)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(pabloLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(raulLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jorgeLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -161,13 +161,13 @@ public class AboutFrame extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton closeBtn;
     private javax.swing.JLabel devsLabel;
-    private javax.swing.JLabel devsLabel1;
     private javax.swing.JLabel groupLabel;
     private javax.swing.JLabel jorgeLabel;
+    private javax.swing.JLabel licenseCNFLabel;
+    private javax.swing.JLabel licenseLabel;
     private javax.swing.JLabel logoLabel;
     private javax.swing.JLabel pabloLabel;
     private javax.swing.JLabel raulLabel;
-    private javax.swing.JLabel raulLabel1;
     private javax.swing.JLabel titleLabel;
     private javax.swing.JLabel univLabel;
     private javax.swing.JLabel versionLabel;
