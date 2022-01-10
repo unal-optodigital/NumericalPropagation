@@ -1,5 +1,5 @@
 # NumericalPropagation
-"NumericalPropagation" is a plugin developed to work on the well-known software for image processing [ImageJ](https://imagej.nih.gov/ij/index.html) or any of its derivate platforms like [Fiji](https://fiji.sc/) or [Micro-Manager](https://micro-manager.org/). It features angular spectrum, Fresnel-Fourier and [Fresnel-Bluestein](http://dx.doi.org/10.1364/AO.49.006430) methods. Also includes an utilities tool, designed to work with complex data in the form of images.
+"NumericalPropagation" is a plugin developed to work on the well-known software for image processing [ImageJ](https://imagej.net/) or any of its derivate platforms like [Fiji](https://fiji.sc/) or [Micro-Manager](https://micro-manager.org/). It features angular spectrum, Fresnel-Fourier and [Fresnel-Bluestein](http://dx.doi.org/10.1364/AO.49.006430) methods. Also includes an utilities tool, designed to work with complex data in the form of images.
 
 Detailed and updated information about this project can be found in the [project page](https://unal-optodigital.github.io/NumericalPropagation/).
 
